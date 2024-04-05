@@ -32,6 +32,10 @@ fn main() {
     // init vector for saving points (x1, y1, x2, y2)
     let mut points: Vec<(f64, f64, f64, f64)> = Vec::new();
 
+    // init message string
+    let mut info_message= String::new();
+    info_message.push_str("Ungültige Zeilen: ");
+
     // open file, read lines
     if let Ok(file) = File::open(file_path) {
         let reader = BufReader::new(file);
@@ -46,6 +50,8 @@ fn main() {
                     points.push((x1, y1, x2, y2));
                 } else {
                     println!("Ungültige Zeile übersprungen: {}", line);
+                    info_message.push_str(&line.to_string());
+                    info_message.push_str(", ");
                 }
             }
         }
@@ -56,7 +62,6 @@ fn main() {
 
     let read_time = Instant::now();
     let read_duration = read_time - start_time;
-    let mut info_message= String::new();
     info_message.push_str("Datei eingelesen (Dauer: ");
     info_message.push_str(&read_duration.as_millis().to_string());
     info_message.push_str(" ms).\n");
@@ -107,7 +112,7 @@ fn main() {
             // lines on same straight
             else if cross_prod == 0.0 {
 
-                // TODO:
+                // TODO: geht das schöner?
                 let partially_coincident = (p1.x >= p2.x && p1.x <= p4.x && p1.y >= p2.y && p1.y <= p4.y) || (p3.x >= p2.x && p3.x <= p4.x && p3.y >= p2.y && p3.y <= p4.y) || (p2.x >= p1.x && p2.x <= p3.x && p2.y >= p1.y && p2.y <= p3.y) || (p4.x >= p1.x && p4.x <= p3.x && p4.y >= p1.y && p4.y <= p3.y);
 
                 if partially_coincident {
