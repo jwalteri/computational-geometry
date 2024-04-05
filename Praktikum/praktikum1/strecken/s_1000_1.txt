@@ -1,0 +1,2 @@
+Datei eingelesen (Dauer: 96507 ms).
+15 Schnittpunkte gefunden (Dauer: 18 ms).

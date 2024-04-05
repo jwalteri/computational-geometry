@@ -1,0 +1,11 @@
+In dem Tar-File 'strecken.tgz' (s.u.) befinden sich Dateien mit jeweils 4 Koordinaten pro Zeile. Diese stellen jeweils die x- und y-Koordinaten eines Start- bzw. Endpunkts einer Strecke dar. Lesen Sie jeweils eine Datei ein und ermitteln Sie die Anzahl der sich schneidenden (d.h. mindestens ein gemeinsamer Punkt) Strecken, indem Sie jedes Paar von Strecken gegeneinander testen. Messen Sie die pro Datei aufgewendete Zeit. Begründen Sie nachvollziehbar, warum die Anzahl der von Ihrem Programm jeweils gefundenen Schnittpunkte korrekt ist.
+
+
+
+
+/* DEFINITION Schnittpunkte:
+T = true (-> det != 0 && 0 <= t&s <= 1)
+II = false (-> det == 0 && cross_prod != 0)
+Deckungsgleich = true (-> det == 0 && cross_prod == 0)
+- - = false (wie Deckungsgleich UND A|B nicht in CD && C|D nicht in AB)
+*/
