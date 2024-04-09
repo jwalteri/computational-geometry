@@ -51,10 +51,22 @@ struct Point {
 Im folgenden Abschnitt werden zwei gefundene Lösungsansätze für die weitere Berechnung erläutert und analysiert.
 
 ## Ansatz geometrisch über Dreisatz
+Ein elementarer Test, um herauszufinden, ob sich zwei Strecken schneiden, ist das Gleichsetzen der Parametergleichungen. Punkte entlang der Strecke werden dabei durch die Verwendung eines Parameters beschrieben. Beide Strecken werden durch eine Parametergleichung dargestellt.
+Gegeben sind zwei Strecken:
+$$ p := [p_1 p_2] \text{ und } q := [q_1 q_2] \text{ im } ℝ² $$
 
-[Johannes Ansatz]
 
+![Beispiele für Streckenpaare mit einem Schnittpunkt.](bilder/Strecken_Schnitt.png) (Nach Prof. M. Fischer, HS München)
 
+Berechnen des Schnittpunkts durch Gleichsetzen:
+$$ p_1 + \lambda(p_2 - p_1) = q_1 + \mu(q_2 - q_1) $$
+
+Die Parameter $\lambda$ und $\mu$ repräsentieren Punkte entlang der Strecke. Sie nehmen immer Werte zwischen 0 und 1 an. So erhält man den Ausgangspunkt der Strecke für den Wert 0 und den Endpunkt der Strecke für den Wert 1.
+Löst man das obige Gleichungssystem und erhält für $\lambda$ oder $\mu$ einen Wert außerhalb des Bereichs von 0 bis 1, bedeutet das, dass ein Punkt außerhalb der Strecken liegt und somit kein Schnittpunkt ist.
+
+Dieser Ansatz lässt sich mit Stift und Papier leicht umsetzen. Für die Berechnung mit Code bietet sich jedoch eine Lösung mithilfe von Determinaten an, da dies in Code sehr viel lesbarer und anwendbarer umsetzen lässt.
+
+Quelle: Vorlesungsunterlagen, 02Grundlagen, Prof. M. Fischer, HS München
 
 ## Ansatz über Determinante
 
@@ -67,6 +79,13 @@ Im folgenden Abschnitt werden zwei gefundene Lösungsansätze für die weitere B
 
 
 # Auswertung
+Im vorliegenden Praktikum wurden drei Files mit Strecken ausgewertet.
 
-[]
+## s_1000_1.dat
+
+| Datei | Anzahl Schnittpunkte | Berechnungsdauer |
+|----------|----------|----------|
+| s_1000_1.dat     |  15  |  12 ms  |
+| s_10000_1.dat    | 737   | 1.173 ms   |
+| s_100000_1.dat   | 77.139   | 11.7203 ms   |
 
