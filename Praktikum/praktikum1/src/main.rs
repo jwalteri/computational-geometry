@@ -34,9 +34,9 @@ Datei eingelesen (Dauer: 206 ms).
 fn main() {
 
     let start_time = Instant::now();
-    let file_path = "strecken/s_1000_1.dat";
+    //let file_path = "strecken/s_1000_1.dat";
     //let file_path = "strecken/s_10000_1.dat";
-    //let file_path = "strecken/s_100000_1.dat";
+    let file_path = "strecken/s_100000_1.dat";
 
     // Logging mithilfe von info_message
     let mut info_message = String::new();
@@ -94,23 +94,33 @@ pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
     // line2 = p3 + s * d34     -> d34 = p4-p3
 
     // Berechne Schnittpunkte zwischen Linienabschnitten
-    for i in 0..n - 2 { // Iteriere über alle Punkte außer den letzten beiden
+    for i in 0..n - 1 { // Iteriere über alle Punkte außer den letzten beiden
 
         // Aktuellen Linienabschnitt bestimmen
         let (x1, y1, x2, y2) = points[i];
         let p1 = Point { x: x1, y: y1 };
         let p2 = Point { x: x2, y: y2 };
 
+        if p1.x == p2.x && p1.y == p2.y {
+            println!("Punkt {} ist ein Punkt und keine Linie", i);
+        }
+
+
         // Richtungsvektor des aktuellen Linienabschnitts
         let d12 = Point { x: p2.x - p1.x, y: p2.y - p1.y };
 
         // Iteriere über die verbleibenden Punkte
-        for j in i + 1..n - 1 {
+        for j in i + 1..n { //- 1 {
             
             // Linienabschnitt zum Vergleichen bestimmen
             let (x3, y3, x4, y4) = points[j];
             let q1 = Point { x: x3, y: y3 };
             let q2 = Point { x: x4, y: y4 };
+
+            if q1.x == q2.x && q1.y == q2.y {
+                println!("Punkt {} ist ein Punkt und keine Linie", j);
+            }
+
             
             // Richtungsvektor des Linienabschnitt zum Vergleichen bestimmen
             let d34 = Point { x: q2.x - q1.x, y: q2.y - q1.y };
@@ -136,11 +146,14 @@ pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
                     (intersection_s.y - q1.y) / d34.y
                 };
 
+                let epsilon = 0.0;
+
                 // Wenn die Parameter zwischen 0 und 1 liegen, gibt es einen Schnittpunkt
-                if 0.0 <= t && t <= 1.0 && 
-                    0.0 <= s && s <= 1.0 {
+                if epsilon <= t && t <= 1.0 && 
+                epsilon <= s && s <= 1.0 {
                     // Inkrementiere die Anzahl der Schnittpunkte
                     intersections = intersections + 1;
+                    //println!("I {}, J {}", i, j);
                 }
             }
 
@@ -148,14 +161,12 @@ pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
             else if cross_prod == 0.0 {
 
                 // Teilweise überlappende Linienabschnitte?
-                let partially_coincident = 
-                (p1.x >= p2.x && p1.x <= q2.x && p1.y >= p2.y && p1.y <= q2.y) || 
-                (q1.x >= p2.x && q1.x <= q2.x && q1.y >= p2.y && q1.y <= q2.y) || 
-                (p2.x >= p1.x && p2.x <= q1.x && p2.y >= p1.y && p2.y <= q1.y) || 
-                (q2.x >= p1.x && q2.x <= q1.x && q2.y >= p1.y && q2.y <= q1.y);
+                let partially_coincident = //is_inside(&p1, &p2, q2, q1);
+                segments_overlap(&p1, &p2, &q1, &q2);
 
                 if partially_coincident {
                     intersections = intersections + 1;
+                    //println!("I {}, J {}", i, j);
                 }
             }
         }
@@ -164,6 +175,26 @@ pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
     intersections
 }
 
+fn is_inside(p1: &Point, p2: &Point, q2: Point, q1: Point) -> bool {
+    let partially_coincident = 
+    (p1.x >= p2.x && p1.x <= q2.x && p1.y >= p2.y && p1.y <= q2.y) || 
+    (q1.x >= p2.x && q1.x <= q2.x && q1.y >= p2.y && q1.y <= q2.y) || 
+    (p2.x >= p1.x && p2.x <= q1.x && p2.y >= p1.y && p2.y <= q1.y) || 
+    (q2.x >= p1.x && q2.x <= q1.x && q2.y >= p1.y && q2.y <= q1.y);
+    partially_coincident
+}
+
+
+fn is_inside2(punkt: &Point, start: &Point, end: &Point) -> bool {
+    (start.x <= punkt.x && punkt.x <= end.x || start.x >= punkt.x && punkt.x >= end.x) &&
+    (start.y <= punkt.y && punkt.y <= end.y || start.y >= punkt.y && punkt.y >= end.y)
+}
+
+fn segments_overlap(start1: &Point, end1: &Point, start2: &Point, end2: &Point) -> bool {
+let p1_inside_segment2 = is_inside2(start2, start1, end1) || is_inside2(end2, start1, end1);
+let p2_inside_segment1 = is_inside2(start1, start2, end2) || is_inside2(end1, start2, end2);
+p1_inside_segment2 || p2_inside_segment1
+}
 
 /// Liest die Punkte aus einer Datei ein und gibt sie als Vektor zurück.
 /// Gibt außerdem eine Info-Nachricht zurück, die ungültige Zeilen enthält.
@@ -198,18 +229,42 @@ fn extract_points(file_path: &str) -> (Vec<(f64, f64, f64, f64)>, String) {
 }
 
 
+#[test]
+fn test_is_inside() {
+    let p1 = Point { x: 1.0, y: 1.0 };
+    let p2 = Point { x: 2.0, y: 2.0 };
+    let q1 = Point { x: 0.0, y: 0.0 };
+    let q2 = Point { x: 3.0, y: 3.0 };
+
+    assert_eq!(segments_overlap(&p1, &p2, &q2, &q1), true);
+    // Add more test cases here
+}
+
+#[test]
+fn test_is_inside_negativ() {
+    let p1 = Point { x: 1.0, y: 1.0 };
+    let p2 = Point { x: 2.0, y: 2.0 };
+    let q1 = Point { x: 0.0, y: 0.0 };
+    let q2 = Point { x: 0.99, y: 0.99 };
+
+    assert_eq!(segments_overlap(&p1, &p2, &q2, &q1), false);
+    // Add more test cases here
+}
 
 #[test]
 fn test_calculate_intersections() {
     let points = &[
-        (0.0, 0.0, 2.0, 2.0),  // Linie 1
-        (1.0, 1.0, 3.0, 3.0),  // Linie 2 (parallel zu Linie 1)
-        (1.0, 2.0, 2.0, 1.0),  // Linie 3 (schneidet Linie 1 und Linie 2)
-        (4.0, 4.0, 5.0, 5.0),  // Linie 4 (parallel zu Linie 1 und Linie 2)
+        (0.0, 0.0, 2.0, 2.0),  // Orange
+        (1.0, 1.0, 3.0, 3.0),  // Grüne (kollinear zu Linie 1)
+        (1.0, 2.0, 2.0, 1.0),  // Rot (schneidet Linie 1 und Linie 2)
+        (4.0, 4.0, 5.0, 5.0),  // Lila (parallel zu Linie 1 und Linie 2)
+        (0.0, 0.0, -2.0, -2.0), // Schwarz
+        (2.0, 4.0, 4.0, 2.0),  // Grau
+        (-0.5, -0.5, -1.5, -1.5), // Pink
+        (-2.0, -2.0, -1.0, -3.0) // Gift
     ];
 
-    // Erwarte 2 Schnittpunkt (Linie 3 schneidet Linie 1 und Linie 2)
-    assert_eq!(calculate_intersections(points), 2);
+    assert_eq!(calculate_intersections(points), 7);
 }
 
 #[test]
