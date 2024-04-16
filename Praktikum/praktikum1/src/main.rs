@@ -363,36 +363,56 @@ fn test_10000_file() {
 }
 
 
-fn ccw(p0: &Point, p1: &Point, p2: &Point) -> i32 {
+fn ccw2(p0: &Point, p1: &Point, p2: &Point) -> i32 {
     let dx1 = p1.x - p0.x;
     let dy1 = p1.y - p0.y;
     let dx2 = p2.x - p0.x;
     let dy2 = p2.y - p0.y;
     
     if dy1*dx2 < dy2*dx1 {
-    return 1;
+        return 1;
     }
     else if dy1*dx2 > dy2*dx1 {
-    return -1;
+        return -1;
     }
     else { // dy1*dx2 == dy2*dx1 ==> kollinear
-    if dx1*dx2 < 0.0 || dy1*dy2 < 0.0 { // p0 in der Mitte
-    return -1;
-    } else if dx1.powi(2) + dy1.powi(2) >= dx2.powi(2) + dy2.powi(2)  { // p2 in der Mitte
-    return 0;
-    } else { // p1 in der Mitte
-    return 1;
+        if dx1*dx2 < 0.0 || dy1*dy2 < 0.0 { // p0 in der Mitte
+            return -1;
+        } else if dx1.powi(2) + dy1.powi(2) >= dx2.powi(2) + dy2.powi(2)  { // p2 in der Mitte
+            return 0;
+        } else { // p1 in der Mitte
+            return 1;
+        }
     }
+}
+
+fn ccw(a: &Point, b: &Point, c: &Point) -> i32 {
+    let area2 = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    if area2 > 0.0 {
+        1  // Counter-Clockwise
+    } else if area2 < 0.0 {
+        -1 // Clockwise
+    } else {
+        0  // Collinear
     }
+}
+
+    fn ccw_intersect (p1: &Point, p2: &Point, p3: &Point, p4: &Point) -> bool {
+        if ccw(p1, p2, p3) * ccw(p1, p2, p4) <= 0 &&
+        ccw(p3, p4, p1) * ccw(p3, p4, p2) <= 0 {
+        return true;
+        } else {
+        return false;
+        }
     }
 
 
 #[test]
 fn test_ccw() {
-    let p0 = Point { x: 0.0, y: 0.0 };
-    let p2 = Point { x: 1.0, y: 1.0 };
-    let p1 = Point { x: 2.0, y: 2.0 };
+    let anfang = Point { x: 0.0, y: 0.0 };
+    let ende = Point { x: 1.0, y: 1.0 };
+    let punkt = Point { x: 2.0, y: 1.0 };
 
-    assert_eq!(ccw(&p0, &p1, &p2), 0);
+    assert_eq!(ccw(&anfang, &ende, &punkt), 1);
 }
 

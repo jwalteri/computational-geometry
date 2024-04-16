@@ -87,5 +87,5 @@ Im vorliegenden Praktikum wurden drei Files mit Strecken ausgewertet.
 |----------|----------|----------|
 | s_1000_1.dat     |  15  |  12 ms  |
 | s_10000_1.dat    | 737   | 1.173 ms   |
-| s_100000_1.dat   | 77.139   | 11.7203 ms   |
+| s_100000_1.dat   | 77.139   | 117.203 ms   |
 
