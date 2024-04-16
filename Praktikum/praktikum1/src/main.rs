@@ -12,6 +12,7 @@ Deckungsgleich = true (-> det == 0 && cross_prod == 0)
 */
 
 use core::panic;
+use std::f32::EPSILON;
 use std::time::{Instant, Duration};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -30,13 +31,14 @@ Datei eingelesen (Dauer: 206 ms).
 77139 Schnittpunkte gefunden (Dauer: 162805 ms).
 */
 
+const PRECISION: f64 = 0.0001;
 
 fn main() {
 
     let start_time = Instant::now();
     //let file_path = "strecken/s_1000_1.dat";
-    //let file_path = "strecken/s_10000_1.dat";
-    let file_path = "strecken/s_100000_1.dat";
+    let file_path = "strecken/s_10000_1.dat";
+    //let file_path = "strecken/s_100000_1.dat";
 
     // Logging mithilfe von info_message
     let mut info_message = String::new();
@@ -128,7 +130,8 @@ pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
             let cross_prod = (q1.x - p1.x) * d34.y - (q1.y - p1.y) * d34.x;
 
             // Wenn Linien nicht parallel sind
-            if det != 0.0 {
+            //if det != 0.0 {
+            if det.abs() > PRECISION {
 
                 // Parameter für den Schnittpunkt des ersten Linienabschnitts
                 let t = cross_prod / det;
@@ -136,17 +139,16 @@ pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
                 let intersection_s = Point { x: p1.x + t * d12.x, y: p1.y + t * d12.y};
 
                 // Berechnung des Parameters für den Schnittpunkt des zweiten Linienabschnitts
-                let s = if d34.x != 0.0 {
+                let s = if d34.x != 0.0 { // 0 weil DivisionByZero
                     (intersection_s.x - q1.x) / d34.x
                 } else {
                     (intersection_s.y - q1.y) / d34.y
                 };
 
-                let epsilon = 0.0;
-
                 // Wenn die Parameter zwischen 0 und 1 liegen, gibt es einen Schnittpunkt
-                if epsilon <= t && t <= 1.0 && 
-                epsilon <= s && s <= 1.0 {
+                // TODO: Prüfen, ob das 0 - PRECISION sinn macht
+                if - PRECISION <= t && t <= 1.0 + PRECISION && 
+                - PRECISION <= s && s <= 1.0 + PRECISION {
                     // Inkrementiere die Anzahl der Schnittpunkte
                     intersections = intersections + 1;
                     //println!("I {}, J {}", i, j);
@@ -154,7 +156,8 @@ pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
             }
 
             // Wenn Linien kollinear sind
-            else if cross_prod == 0.0 {
+            // else if cross_prod == 0.0 {
+            else if cross_prod.abs() < PRECISION {
 
                 // Teilweise überlappende Linienabschnitte?
                 let partially_coincident = //is_inside(&p1, &p2, q2, q1);
@@ -171,24 +174,14 @@ pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
     intersections
 }
 
-fn is_inside(p1: &Point, p2: &Point, q2: Point, q1: Point) -> bool {
-    let partially_coincident = 
-    (p1.x >= p2.x && p1.x <= q2.x && p1.y >= p2.y && p1.y <= q2.y) || 
-    (q1.x >= p2.x && q1.x <= q2.x && q1.y >= p2.y && q1.y <= q2.y) || 
-    (p2.x >= p1.x && p2.x <= q1.x && p2.y >= p1.y && p2.y <= q1.y) || 
-    (q2.x >= p1.x && q2.x <= q1.x && q2.y >= p1.y && q2.y <= q1.y);
-    partially_coincident
-}
-
-
-fn is_inside2(punkt: &Point, start: &Point, end: &Point) -> bool {
+fn is_inside(punkt: &Point, start: &Point, end: &Point) -> bool {
     (start.x <= punkt.x && punkt.x <= end.x || start.x >= punkt.x && punkt.x >= end.x) &&
     (start.y <= punkt.y && punkt.y <= end.y || start.y >= punkt.y && punkt.y >= end.y)
 }
 
 fn segments_overlap(start1: &Point, end1: &Point, start2: &Point, end2: &Point) -> bool {
-let p1_inside_segment2 = is_inside2(start2, start1, end1) || is_inside2(end2, start1, end1);
-let p2_inside_segment1 = is_inside2(start1, start2, end2) || is_inside2(end1, start2, end2);
+let p1_inside_segment2 = is_inside(start2, start1, end1) || is_inside(end2, start1, end1);
+let p2_inside_segment1 = is_inside(start1, start2, end2) || is_inside(end1, start2, end2);
 p1_inside_segment2 || p2_inside_segment1
 }
 
@@ -354,3 +347,52 @@ fn test_punkt_in_punkt() {
 
     assert_eq!(calculate_intersections(points), 1);
 }
+
+#[test]
+fn test_1000_file() {
+    let file_path = "strecken/s_1000_1.dat";
+    let (points, _) = extract_points(file_path);
+    assert_eq!(calculate_intersections(&points), 11);
+}
+
+#[test]
+fn test_10000_file() {
+    let file_path = "strecken/s_10000_1.dat";
+    let (points, _) = extract_points(file_path);
+    assert_eq!(calculate_intersections(&points), 732);
+}
+
+
+fn ccw(p0: &Point, p1: &Point, p2: &Point) -> i32 {
+    let dx1 = p1.x - p0.x;
+    let dy1 = p1.y - p0.y;
+    let dx2 = p2.x - p0.x;
+    let dy2 = p2.y - p0.y;
+    
+    if dy1*dx2 < dy2*dx1 {
+    return 1;
+    }
+    else if dy1*dx2 > dy2*dx1 {
+    return -1;
+    }
+    else { // dy1*dx2 == dy2*dx1 ==> kollinear
+    if dx1*dx2 < 0.0 || dy1*dy2 < 0.0 { // p0 in der Mitte
+    return -1;
+    } else if dx1.powi(2) + dy1.powi(2) >= dx2.powi(2) + dy2.powi(2)  { // p2 in der Mitte
+    return 0;
+    } else { // p1 in der Mitte
+    return 1;
+    }
+    }
+    }
+
+
+#[test]
+fn test_ccw() {
+    let p0 = Point { x: 0.0, y: 0.0 };
+    let p2 = Point { x: 1.0, y: 1.0 };
+    let p1 = Point { x: 2.0, y: 2.0 };
+
+    assert_eq!(ccw(&p0, &p1, &p2), 0);
+}
+
