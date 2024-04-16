@@ -229,6 +229,8 @@ fn extract_points(file_path: &str) -> (Vec<(f64, f64, f64, f64)>, String) {
 }
 
 
+
+
 #[test]
 fn test_is_inside() {
     let p1 = Point { x: 1.0, y: 1.0 };
@@ -268,18 +270,91 @@ fn test_calculate_intersections() {
 }
 
 #[test]
-fn test_calculate_intersections_2() {
-    // Definiere einige Testpunkte
+fn test_simple_schnitt() {
     let points = &[
-        (0.0, 0.0, 2.0, 2.0),  // Linie 1
-        (1.0, 1.0, 3.0, 3.0),  // Linie 2 (parallel zu Linie 1)
-        (1.0, 2.0, 2.0, 1.0),  // Linie 3 (schneidet Linie 1 und Linie 2)
-        (4.0, 4.0, 5.0, 5.0),  // Linie 4 (parallel zu Linie 1 und Linie 2)
-        (0.0, 0.0, 3.0, 3.0),  // Linie 5 (entspricht Linie 1)
-        (0.0, 0.0, 2.0, 4.0),  // Linie 6 (schneidet Linie 1)
-        (1.0, 1.0, 2.0, 4.0),  // Linie 7 (parallele Linie zu Linie 1)
-    ];
+        (0.0, 0.0, 2.0, 2.0), 
+        (0.0, 2.0, 2.0, 0.0)];
 
-    // Erwarte 2 Schnittpunkte
-    assert_eq!(calculate_intersections(points), 8);
+    assert_eq!(calculate_intersections(points), 1);
+}
+
+#[test]
+fn test_gleicher_endpunkt() {
+    let points = &[
+        (0.0, 0.0, 2.0, 2.0), 
+        (1.0, 3.0, 2.0, 2.0)];
+
+    assert_eq!(calculate_intersections(points), 1);
+}
+
+#[test]
+fn test_gleicher_endpunkt2() {
+    let points = &[
+        (0.0, 0.0, 2.0, 2.0), 
+        (3.0, 1.0, 2.0, 2.0)];
+
+    assert_eq!(calculate_intersections(points), 1);
+}
+
+#[test]
+fn test_schnitt_im_endpunkt() {
+    let points = &[
+        (0.0, 0.0, 2.0, 2.0), 
+        (1.0, 3.0, 3.0, 1.0)];
+
+    assert_eq!(calculate_intersections(points), 1);
+}
+
+#[test]
+fn test_senkrecht_waagerecht() {
+    let points = &[
+        (1.0, 2.0, 3.0, 2.0), 
+        (2.0, 3.0, 2.0, 1.0)];
+
+    assert_eq!(calculate_intersections(points), 1);
+}
+
+#[test]
+fn test_kollinear_schnitt() {
+    let points = &[
+        (1.0, 1.0, 2.0, 2.0), 
+        (3.0, 3.0, 2.0, 2.0)];
+
+    assert_eq!(calculate_intersections(points), 1);
+}
+
+#[test]
+fn test_strecke_in_strecke() {
+    let points = &[
+        (1.0, 1.0, 3.0, 3.0), 
+        (4.0, 4.0, 2.0, 2.0)];
+
+    assert_eq!(calculate_intersections(points), 1);
+}
+
+#[test]
+fn test_kollinear_kein_schnitt() {
+    let points = &[
+        (1.0, 1.0, 2.0, 2.0), 
+        (3.0, 3.0, 4.0, 4.0)];
+
+    assert_eq!(calculate_intersections(points), 0);
+}
+
+#[test]
+fn test_punkt_strecke() {
+    let points = &[
+        (1.0, 1.0, 3.0, 3.0), 
+        (2.0, 2.0, 2.0, 2.0)];
+
+    assert_eq!(calculate_intersections(points), 1);
+}
+
+#[test]
+fn test_punkt_in_punkt() {
+    let points = &[
+        (1.0, 1.0, 1.0, 1.0), 
+        (1.0, 1.0, 1.0, 1.0)];
+
+    assert_eq!(calculate_intersections(points), 1);
 }
