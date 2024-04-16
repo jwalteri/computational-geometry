@@ -81,10 +81,6 @@ struct Point {
     y: f64,
 }
 
-fn multiplyPoints(p1: Point, p2: Point) -> Point {
-    Point { x: p1.x * p2.x, y: p1.y * p2.y }
-}
-
 pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
 
     let n = points.len();
