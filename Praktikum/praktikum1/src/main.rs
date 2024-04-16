@@ -347,7 +347,7 @@ fn test_punkt_strecke() {
 }
 
 #[test]
-fn test_punkt_in_punkt() {
+fn test_punkt_in_punktYZ() {
     let points = &[
         (1.0, 1.0, 1.0, 1.0), 
         (1.0, 1.0, 1.0, 1.0)];
