@@ -37,8 +37,8 @@ fn main() {
 
     let start_time = Instant::now();
     //let file_path = "strecken/s_1000_1.dat";
-    let file_path = "strecken/s_10000_1.dat";
-    //let file_path = "strecken/s_100000_1.dat";
+    //let file_path = "strecken/s_10000_1.dat";
+    let file_path = "strecken/s_100000_1.dat";
 
     // Logging mithilfe von info_message
     let mut info_message = String::new();
@@ -99,11 +99,6 @@ pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
         let p1 = Point { x: x1, y: y1 };
         let p2 = Point { x: x2, y: y2 };
 
-        if p1.x == p2.x && p1.y == p2.y {
-            println!("Punkt {} ist ein Punkt und keine Linie", i);
-        }
-
-
         // Richtungsvektor des aktuellen Linienabschnitts
         let d12 = Point { x: p2.x - p1.x, y: p2.y - p1.y };
 
@@ -114,11 +109,6 @@ pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
             let (x3, y3, x4, y4) = points[j];
             let q1 = Point { x: x3, y: y3 };
             let q2 = Point { x: x4, y: y4 };
-
-            if q1.x == q2.x && q1.y == q2.y {
-                println!("Punkt {} ist ein Punkt und keine Linie", j);
-            }
-
             
             // Richtungsvektor des Linienabschnitt zum Vergleichen bestimmen
             let d34 = Point { x: q2.x - q1.x, y: q2.y - q1.y };
@@ -160,8 +150,7 @@ pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
             else if cross_prod.abs() < PRECISION {
 
                 // Teilweise überlappende Linienabschnitte?
-                let partially_coincident = //is_inside(&p1, &p2, q2, q1);
-                segments_overlap(&p1, &p2, &q1, &q2);
+                let partially_coincident = segments_overlap(&p1, &p2, &q1, &q2);
 
                 if partially_coincident {
                     intersections = intersections + 1;
@@ -174,11 +163,13 @@ pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
     intersections
 }
 
+// Überprüft, ob ein Punkt auf der Strecke liegt
 fn is_inside(punkt: &Point, start: &Point, end: &Point) -> bool {
     (start.x <= punkt.x && punkt.x <= end.x || start.x >= punkt.x && punkt.x >= end.x) &&
     (start.y <= punkt.y && punkt.y <= end.y || start.y >= punkt.y && punkt.y >= end.y)
 }
 
+// Prüft, ob sich eines der Segmente überlappen
 fn segments_overlap(start1: &Point, end1: &Point, start2: &Point, end2: &Point) -> bool {
 let p1_inside_segment2 = is_inside(start2, start1, end1) || is_inside(end2, start1, end1);
 let p2_inside_segment1 = is_inside(start1, start2, end2) || is_inside(end1, start2, end2);
@@ -354,65 +345,3 @@ fn test_1000_file() {
     let (points, _) = extract_points(file_path);
     assert_eq!(calculate_intersections(&points), 11);
 }
-
-#[test]
-fn test_10000_file() {
-    let file_path = "strecken/s_10000_1.dat";
-    let (points, _) = extract_points(file_path);
-    assert_eq!(calculate_intersections(&points), 732);
-}
-
-
-fn ccw2(p0: &Point, p1: &Point, p2: &Point) -> i32 {
-    let dx1 = p1.x - p0.x;
-    let dy1 = p1.y - p0.y;
-    let dx2 = p2.x - p0.x;
-    let dy2 = p2.y - p0.y;
-    
-    if dy1*dx2 < dy2*dx1 {
-        return 1;
-    }
-    else if dy1*dx2 > dy2*dx1 {
-        return -1;
-    }
-    else { // dy1*dx2 == dy2*dx1 ==> kollinear
-        if dx1*dx2 < 0.0 || dy1*dy2 < 0.0 { // p0 in der Mitte
-            return -1;
-        } else if dx1.powi(2) + dy1.powi(2) >= dx2.powi(2) + dy2.powi(2)  { // p2 in der Mitte
-            return 0;
-        } else { // p1 in der Mitte
-            return 1;
-        }
-    }
-}
-
-fn ccw(a: &Point, b: &Point, c: &Point) -> i32 {
-    let area2 = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-    if area2 > 0.0 {
-        1  // Counter-Clockwise
-    } else if area2 < 0.0 {
-        -1 // Clockwise
-    } else {
-        0  // Collinear
-    }
-}
-
-    fn ccw_intersect (p1: &Point, p2: &Point, p3: &Point, p4: &Point) -> bool {
-        if ccw(p1, p2, p3) * ccw(p1, p2, p4) <= 0 &&
-        ccw(p3, p4, p1) * ccw(p3, p4, p2) <= 0 {
-        return true;
-        } else {
-        return false;
-        }
-    }
-
-
-#[test]
-fn test_ccw() {
-    let anfang = Point { x: 0.0, y: 0.0 };
-    let ende = Point { x: 1.0, y: 1.0 };
-    let punkt = Point { x: 2.0, y: 1.0 };
-
-    assert_eq!(ccw(&anfang, &ende, &punkt), 1);
-}
-

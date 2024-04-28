@@ -85,7 +85,7 @@ Im vorliegenden Praktikum wurden drei Files mit Strecken ausgewertet.
 
 | Datei | Anzahl Schnittpunkte | Berechnungsdauer |
 |----------|----------|----------|
-| s_1000_1.dat     |  15  |  12 ms  |
-| s_10000_1.dat    | 737   | 1.173 ms   |
-| s_100000_1.dat   | 77.139   | 117.203 ms   |
+| s_1000_1.dat     |  11  |  18 ms  |
+| s_10000_1.dat    | 733   | 1.294 ms   |
+| s_100000_1.dat   | 77.171   | 124.300 ms   |
 
