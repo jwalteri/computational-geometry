@@ -50,10 +50,12 @@ struct Point {
 ```
 Im folgenden Abschnitt werden zwei gefundene Lösungsansätze für die weitere Berechnung erläutert und analysiert.
 
+
 ## Ansatz geometrisch über Dreisatz
+
 Ein elementarer Test, um herauszufinden, ob sich zwei Strecken schneiden, ist das Gleichsetzen der Parametergleichungen. Punkte entlang der Strecke werden dabei durch die Verwendung eines Parameters beschrieben. Beide Strecken werden durch eine Parametergleichung dargestellt.
 Gegeben sind zwei Strecken:
-$$ p := [p_1 p_2] \text{ und } q := [q_1 q_2] \text{ im } ℝ² $$
+$$ \overline{P} := [p_1 p_2] \text{ und } \overline{Q} := [q_1 q_2] \text{ im } ℝ² $$
 
 
 ![Beispiele für Streckenpaare mit einem Schnittpunkt.](bilder/Strecken_Schnitt.png) (Nach Prof. M. Fischer, HS München)
@@ -68,12 +70,18 @@ Dieser Ansatz lässt sich mit Stift und Papier leicht umsetzen. Für die Berechn
 
 Quelle: Vorlesungsunterlagen, 02Grundlagen, Prof. M. Fischer, HS München
 
+
 ## Ansatz über Determinante
 
-[Luca Ansatz]
+Um verschiedene Fälle möglichst Effizient abzuarbeiten ist es empfehlenswert, den common-case zuerst zu betrachten. So muss nicht bei jeder Berechnung zuerst alle Sonderfälle betrachtet werden, was unnötig Zeit kosten würde. Im Fall von zwei Strecken ist der common-case, dass die Ausrichtung dieser Strecken nicht parallel ist, sondern verschiedene Richtungen aufweisen.
+
+Durch die Determinante lässt sich dies ermitteln, da im 2-dimensionalen die Determinante zweier Strecken $\overline{P}$, $\overline{Q}$ genau dann Null ergibt, wenn die Richtungsvektoren parallel sind.\
+Anschließend lässt sich über das Kreuzprodukt eines Richtungsverktors $\overrightarrow{u_P} = \overrightarrow{p_2}-\overrightarrow{p_1}$ zusammen mit dem Vektor zwischen den Ortsvektoren $\overrightarrow{p_1}$ und $\overrightarrow{q_1}$ beider Strecken ermitteln, ob die Linien zusätzlich kollinear sind. Der Quotient aus dem Kreuzprodukt und der Determinante ergibt ein Skalar $t$, über welches man den Schnittpunkt $S$ durch einsetzen in die Geradengleichung der ersten Strecke erhält. Berechnet man nun mit diesem Schnittpunkt $S$ das Skalar $s$ der zweiten Strecke, so ergibt sich ein Schnittpunkt der Strecken, wenn: $$ 0 \leq s,t \leq 1$$
+
+Andernfalls kann überprüft werden, ob im Falle von Kollinearität eine partielle oder sogar vollständige Übereinstimmung der Geraden vorliegt. Hierzu wird lediglich die Reihenfolge der Start- und Endpunkte betrachtet und auf mindestens eine Überschneidung überprüft.
 
 
-# Test mit Codeerklärung + Unittests
+# Test mit GeoGebra
 
 []
 
