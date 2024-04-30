@@ -5,7 +5,9 @@ use plotters::prelude::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let points = read_points("states/Bayern.txt")?;
-    draw_polygon(&points)?;
+
+
+    
     Ok(())
 }
 
@@ -16,7 +18,7 @@ where
 {
     let file = File::open(filename)?;
     let reader = io::BufReader::new(file);
-    let mut points = Vec::new();
+    let mut points: Vec<(f32, f32)> = Vec::new();
 
     for line in reader.lines() {
         let line = line?;
@@ -28,9 +30,26 @@ where
         }
     }
 
-    Ok(points)
+    // Ursprungskoordinaten
+    let origin_x = points[0].0;
+    let origin_y = points[0].1;
+    
+    // Konvertierung der relativen Punkte in absolute Koordinaten
+    let start = points.remove(0); // Startpunkt am Anfang raus
+    points.pop(); // Startpunkt am Ende raus
+    let mut absolute_points: Vec<(f32, f32)> = relative_to_absolute(&points, origin_x, origin_y);
+    absolute_points.insert(0, start); // Startpunkt wieder einfügen
+
+    // Ausgabe der absoluten Punkte
+    println!("Absolute Punkte:");
+    for point in &absolute_points {
+        println!("({}, {})", point.0, point.1);
+    }
+
+    Ok(absolute_points)
 }
 
+// DEPRECATED: Versucht ein Polygon zu zeichnen
 fn draw_polygon(points: &[(f32, f32)]) -> Result<(), Box<dyn std::error::Error>> {
     let root = BitMapBackend::new("polygon.png", (640, 480)).into_drawing_area();
     root.fill(&WHITE)?;
@@ -50,4 +69,21 @@ fn draw_polygon(points: &[(f32, f32)]) -> Result<(), Box<dyn std::error::Error>>
 
     root.present()?;
     Ok(())
+}
+
+// Transformiert die relativen Punkte zu absoluten Punkten
+fn relative_to_absolute(relative_points: &Vec<(f32, f32)>, origin_x: f32, origin_y: f32) -> Vec<(f32, f32)> {
+    let mut absolute_points = Vec::new();
+    let mut current_x = origin_x;
+    let mut current_y = origin_y;
+
+    for &(x, y) in relative_points {
+        let absolute_x = current_x + x;
+        let absolute_y = current_y + y;
+        absolute_points.push((absolute_x, absolute_y));
+        current_x = absolute_x;
+        current_y = absolute_y;
+    }
+
+    absolute_points
 }
