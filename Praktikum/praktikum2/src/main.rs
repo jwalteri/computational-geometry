@@ -6,6 +6,9 @@ use plotters::prelude::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 
+    // Speichere die Koordinaten der Bundesländer aus Deutschland in jeweils eigene .txt-Dateien
+    //save_coordinates_from_each_state();
+
     // Lese die Dateien im Verzeichnis "states" ein
     let states_path = "states";
     let dir_entries = std::fs::read_dir(states_path)?;
@@ -91,34 +94,9 @@ fn get_files_with_ending(states: &mut Vec<String>, dir_entries: std::fs::ReadDir
     Ok(())
 }
 
-// TODO: ~low prio~ Speichert die Koordinaten der Bundesländer aus .svg in einer .txt Datei
+// TODO: ~low prio~ Speichert die Koordinaten der Bundesländer aus DeutschlandMitStaedten.svg in jeweils einer "state".txt Datei
 fn save_coordinates_from_each_state(){
     
-}
-
-
-fn read_points<P>(filename: P) -> io::Result<Vec<(f32, f32)>>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(filename)?;
-    let reader = io::BufReader::new(file);
-    let mut points: Vec<(f32, f32)> = Vec::new();
-
-    for line in reader.lines() {
-        let line = line?;
-        let coords: Vec<f32> = line.split(',')
-                                   .map(|s| s.parse().unwrap())
-                                   .collect();
-        if coords.len() == 2 {
-            points.push((coords[0], coords[1]));
-        }
-    }
-
-    // Konvertierung der relativen Punkte in absolute Koordinaten
-    let absolute_points: Vec<(f32, f32)> = relative_to_absolute(&points);
-
-    Ok(absolute_points)
 }
 
 // DEPRECATED: Versucht ein Polygon zu zeichnen
@@ -149,67 +127,7 @@ fn draw_polygon(name: String, points: Vec<Vec<(f32, f32)>>) -> Result<(), Box<dy
     Ok(())
 }
 
-// Transformiert die relativen Punkte zu absoluten Punkten (OLD -> delete)
-fn relative_to_absolute(relative_points: &Vec<(f32, f32)>) -> Vec<(f32, f32)> {
-    // Ursprungskoordinaten
-    let origin_x = relative_points[0].0;
-    let origin_y = relative_points[0].1;
-    
-
-    let mut absolute_points = Vec::new();
-    let mut current_x = origin_x;
-    let mut current_y = origin_y;
-
-    let firstPoint = relative_points[0];
-    let mut f2Point: (f32, f32) = (0.0,0.0);
-    let mut f2Point2: (f32, f32) = (0.0,0.0);
-
-    // Bayern
-    if firstPoint == (393.093,474.992) {
-        f2Point = (275.0,712.497);
-        f2Point2 = (275.0,574.206);
-    }
-    // Thüringen
-    if firstPoint == (312.004,351.725) {
-        f2Point = (265.601,388.0);
-        f2Point2 = (100000.0,1000000.0);
-    }
-
-
-
-
-    for &(x, y) in relative_points {
-        if firstPoint == (x, y) {
-            current_x = firstPoint.0;
-            current_y = firstPoint.1;
-            absolute_points.push((current_x, current_y));
-            continue;
-        }
-
-        if f2Point == (x, y) {
-            current_x = f2Point.0;
-            current_y = f2Point.1;
-            absolute_points.push((current_x, current_y));
-            continue;
-        }
-
-        if f2Point2 == (x, y) {
-            current_x = f2Point2.0;
-            current_y = f2Point2.1;
-            absolute_points.push((current_x, current_y));
-            continue;
-        }
-
-        let absolute_x = current_x + x;
-        let absolute_y = current_y + y;
-        absolute_points.push((absolute_x, absolute_y));
-        current_x = absolute_x;
-        current_y = absolute_y;
-    }
-
-    absolute_points
-}
-
+// Lese die Datei Zeile für Zeile ein und konvertiere die relativen Koordinaten in absolute Koordinaten bzw. behalte die absoluten Koordinaten
 fn relative_file_to_absolute_vector(filename: String) -> Vec<Vec<(f32, f32)>> {
 
     // Vektor für die absoluten Punkte
