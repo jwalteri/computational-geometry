@@ -9,6 +9,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let states = vec![
         "Thueringen",
         "Bayern",
+        "Saarland",
         ];
 
         /*
@@ -134,7 +135,7 @@ fn draw_polygon(name: String, points: Vec<Vec<(f32, f32)>>) -> Result<(), Box<dy
     Ok(())
 }
 
-// Transformiert die relativen Punkte zu absoluten Punkten
+// Transformiert die relativen Punkte zu absoluten Punkten (OLD -> delete)
 fn relative_to_absolute(relative_points: &Vec<(f32, f32)>) -> Vec<(f32, f32)> {
     // Ursprungskoordinaten
     let origin_x = relative_points[0].0;
