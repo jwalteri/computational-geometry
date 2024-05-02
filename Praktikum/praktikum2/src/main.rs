@@ -1,10 +1,8 @@
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 use std::path::Path;
-use std::thread::current;
+use std::vec;
 use plotters::prelude::*;
-use xml::reader::XmlEvent;
-use xml::EventReader;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 
@@ -31,10 +29,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "Schleswig-Holstein"
          */
 
+    let mut points_to_plot: vec::Vec<(f32, f32)> = Vec::new();
+
     for state in states {
 
         let filename = format!("states/{}", state);
-        let points = relativeFileToAbsoluteVector(format!("{}{}", &filename, ".txt"));
+        let mut points: Vec<(f32, f32)> = relative_file_to_absolute_vector(format!("{}{}", &filename, ".txt"));
+
 
         draw_polygon(format!("{}{}", &filename, ".png"), &points)?;
 
@@ -61,8 +62,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             a_ges = a_ges + sign * area;
         }
 
+        points_to_plot.append(&mut points);
+
         println!("Fläche von {}: {}", state, a_ges.abs());
     }
+
+    draw_polygon("Deutschland.png".to_owned(), &points_to_plot)?;
 
 
     // Berechne ccw für Punkt n und n+1
@@ -101,14 +106,17 @@ where
 
 // DEPRECATED: Versucht ein Polygon zu zeichnen
 fn draw_polygon(name: String, points: &[(f32, f32)]) -> Result<(), Box<dyn std::error::Error>> {
-    let root = BitMapBackend::new(&name, (640, 480)).into_drawing_area();
+    let root = BitMapBackend::new(&name, (2000, 2000)).into_drawing_area();
     root.fill(&WHITE)?;
+
+    // Flip the y-axis of input data
+    //let points: Vec<(f32, f32)> = points.iter().map(|(x, y)| (*x, -1.0 *y)).collect();
 
     let mut chart = ChartBuilder::on(&root)
         .margin(5)
-        .x_label_area_size(30)
+        .top_x_label_area_size(30)
         .y_label_area_size(30)
-        .build_cartesian_2d(0f32..1000f32, 0f32..1000f32)?;
+        .build_cartesian_2d(0f32..1000f32, 1000f32..0f32)?;
 
     chart.configure_mesh().draw()?;
 
@@ -182,7 +190,7 @@ fn relative_to_absolute(relative_points: &Vec<(f32, f32)>) -> Vec<(f32, f32)> {
     absolute_points
 }
 
-fn relativeFileToAbsoluteVector(filename: String) -> Vec<(f32, f32)> {
+fn relative_file_to_absolute_vector(filename: String) -> Vec<(f32, f32)> {
         // Vektor für die absoluten Punkte
         let mut absolute_points = Vec::new();
 
