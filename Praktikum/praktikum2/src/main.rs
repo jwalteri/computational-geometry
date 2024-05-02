@@ -6,30 +6,15 @@ use plotters::prelude::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 
-    let states = vec![
-        "Thueringen",
-        "Bayern",
-        "Saarland",
-        ];
+    // Lese die Dateien im Verzeichnis "states" ein
+    let states_path = "states";
+    let dir_entries = std::fs::read_dir(states_path)?;
 
-        /*
-                "Sachsen",
-        "Sachsen-Anhalt",
-        "Niedersachsen",
-        "Mecklenburg-Vorpommern",
-        "Hessen",
-        "Hamburg",
-        "Bremen",
-        "Brandenburg",
-        "Berlin",
-        "Bayern",
-        "Baden-Wuerttemberg",
-        "Nordrhein-Westfalen",
-        "Rheinland-Pfalz",
-        "Saarland",
-        "Schleswig-Holstein"
-         */
-
+    // Erstelle einen Vektor für die Dateinamen (Bundesländer) der .txt-Dateien
+    let file_ending = ".txt".to_string();
+    let mut states: Vec<String> = Vec::new();
+    get_files_with_ending(&mut states, dir_entries, &file_ending)?;
+    
     let mut points_to_plot: vec::Vec<Vec<(f32, f32)>> = Vec::new();
 
     for state in states {
@@ -80,6 +65,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
     Ok(())
+}
+
+// Lese die "ending" Dateien im Verzeichnis "dir_entries" ein und übergebe die Dateinamen als Vektor
+fn get_files_with_ending(states: &mut Vec<String>, dir_entries: std::fs::ReadDir, ending: &String) -> Result<(), Box<dyn std::error::Error>> {
+
+    for entry in dir_entries {
+        let entry = entry?;
+        let file_name = entry.file_name();
+        if let Some(file_str) = file_name.to_str() {
+            if file_str.ends_with(ending) {
+                if let Some(file_stem) = Path::new(file_str).file_stem() {
+                    if let Some(file_name_str) = file_stem.to_str() {
+                        states.push(file_name_str.to_string());
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn save_coordinates_from_each_state(){
+
+    
 }
 
 
@@ -197,45 +206,45 @@ fn relative_to_absolute(relative_points: &Vec<(f32, f32)>) -> Vec<(f32, f32)> {
 }
 
 fn relative_file_to_absolute_vector(filename: String) -> Vec<(f32, f32)> {
-        // Vektor für die absoluten Punkte
-        let mut absolute_points = Vec::new();
+    // Vektor für die absoluten Punkte
+    let mut absolute_points = Vec::new();
 
-        // Öffne die Datei
-        if let Ok(file) = File::open(filename) {
-            // Erstelle einen Pufferleser, um die Datei zeilenweise zu lesen
-            let reader = BufReader::new(file);
-    
-            // Last point
-            let mut last_point = (0.0, 0.0);
+    // Öffne die Datei
+    if let Ok(file) = File::open(filename) {
+        // Erstelle einen Pufferleser, um die Datei zeilenweise zu lesen
+        let reader = BufReader::new(file);
 
-            // Durchlaufe jede Zeile in der Datei
-            for line in reader.lines() {
-                if let Ok(line) = line {
-                    // Überprüfe das Format der Zeile
-                    let (x, y) = match line.chars().next() {             
-                        Some('l') => {
-                            let parts: Vec<&str> = line[1..].split(',').collect();
-                            (parts[0].parse::<f32>().unwrap() + last_point.0, parts[1].parse::<f32>().unwrap() + last_point.1)
-                        },
-                        Some('L') | Some('M') => {
-                            let parts: Vec<&str> = line[1..].split(',').collect();
-                            (parts[0].parse::<f32>().unwrap(), parts[1].parse::<f32>().unwrap())
-                        },
-                        _ => {
-                            println!("Unbekanntes Format");
-                            continue;
-                        }
-                    };
+        // Last point
+        let mut last_point = (0.0, 0.0);
 
-                    last_point = (x, y);
-                    absolute_points.push((x, y));
-                }
+        // Durchlaufe jede Zeile in der Datei
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                // Überprüfe das Format der Zeile
+                let (x, y) = match line.chars().next() {             
+                    Some('l') => {
+                        let parts: Vec<&str> = line[1..].split(',').collect();
+                        (parts[0].parse::<f32>().unwrap() + last_point.0, parts[1].parse::<f32>().unwrap() + last_point.1)
+                    },
+                    Some('L') | Some('M') => {
+                        let parts: Vec<&str> = line[1..].split(',').collect();
+                        (parts[0].parse::<f32>().unwrap(), parts[1].parse::<f32>().unwrap())
+                    },
+                    _ => {
+                        println!("Unbekanntes Format");
+                        continue;
+                    }
+                };
+
+                last_point = (x, y);
+                absolute_points.push((x, y));
             }
-        } else {
-            println!("Die Datei konnte nicht geöffnet werden.");
         }
+    } else {
+        println!("Die Datei konnte nicht geöffnet werden.");
+    }
 
-        return absolute_points;
+    return absolute_points;
 }
 
 
