@@ -15,15 +15,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut states: Vec<String> = Vec::new();
     get_files_with_ending(&mut states, dir_entries, &file_ending)?;
     
-    let mut points_to_plot: vec::Vec<Vec<(f32, f32)>> = Vec::new();
+    let mut germany_plot: vec::Vec<Vec<(f32, f32)>> = Vec::new();
 
     for state in states {
 
         let filename = format!("states/{}", state);
-        let mut points: Vec<(f32, f32)> = relative_file_to_absolute_vector(format!("{}{}", &filename, ".txt"));
+        let mut state_points: Vec<Vec<(f32, f32)>> = relative_file_to_absolute_vector(format!("{}{}", &filename, ".txt"));
 
+        // Zeichne jedes Bundesland einzeln in "state.png"
         let mut tmp: vec::Vec<Vec<(f32, f32)>> = Vec::new();
-        tmp.push(points.clone());
+        for p in &mut state_points {
+            tmp.push(p.clone())
+        }
         draw_polygon(format!("{}{}", &filename, ".png"), tmp)?;
 
 
@@ -33,29 +36,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Gesamtfläche
         let mut a_ges = 0.0;
 
-        // Wähle Punkte n und n+1
-        for i in 0..points.len() - 1 {
+        for connected_points in &mut state_points {
+            // Wähle Punkte n und n+1 aus letztem points-Vector
+            for i in 0..connected_points.len() - 1 {
 
-            // Punkte ausgabe von points[i], points[i + 1]
-            //println!("Punkt {}: ({},{}), Punkt {}: ({},{})", i, points[i].0, points[i].1, i + 1, points[i + 1].0, points[i + 1].1);
+                // Punkte ausgabe von points[i], points[i + 1]
+                //println!("Punkt {}: ({},{}), Punkt {}: ({},{})", i, points[i].0, points[i].1, i + 1, points[i + 1].0, points[i + 1].1);
 
-            // Berechne ccw für Punkt n und n+1
-            let sign = ccw(ursprung, points[i], points[i + 1]);
+                // Berechne ccw für Punkt n und n+1
+                let sign = ccw(ursprung, connected_points[i], connected_points[i + 1]);
 
-            // Flächeninhalt berechnen
-            let area = (points[i].0 * points[i + 1].1) - (points[i + 1].0 * points[i].1) / 2.0;
+                // Flächeninhalt berechnen
+                let area = (connected_points[i].0 * connected_points[i + 1].1) - (connected_points[i + 1].0 * connected_points[i].1) / 2.0;
 
-            // Summiere Flächen auf
-            a_ges = a_ges + sign * area;
+                // Summiere Flächen auf
+                a_ges = a_ges + sign * area;
+            }
+
+            // Füge die Punkte zum Deutschland-Plot hinzu
+            germany_plot.push(connected_points.clone());
         }
-
-        // Füge Punkte den Plot hinzu
-        points_to_plot.push(points);
 
         println!("Fläche von {}: {}", state, a_ges.abs());
     }
 
-    draw_polygon("Deutschland.png".to_owned(), points_to_plot)?;
+    draw_polygon("Deutschland.png".to_owned(), germany_plot)?;
 
 
     // Berechne ccw für Punkt n und n+1
@@ -86,8 +91,8 @@ fn get_files_with_ending(states: &mut Vec<String>, dir_entries: std::fs::ReadDir
     Ok(())
 }
 
+// TODO: ~low prio~ Speichert die Koordinaten der Bundesländer aus .svg in einer .txt Datei
 fn save_coordinates_from_each_state(){
-
     
 }
 
@@ -205,12 +210,14 @@ fn relative_to_absolute(relative_points: &Vec<(f32, f32)>) -> Vec<(f32, f32)> {
     absolute_points
 }
 
-fn relative_file_to_absolute_vector(filename: String) -> Vec<(f32, f32)> {
+fn relative_file_to_absolute_vector(filename: String) -> Vec<Vec<(f32, f32)>> {
+
     // Vektor für die absoluten Punkte
-    let mut absolute_points = Vec::new();
+    let mut p_connected = Vec::new();
+    let mut p_state = Vec::new();
 
     // Öffne die Datei
-    if let Ok(file) = File::open(filename) {
+    if let Ok(file) = File::open(&filename) {
         // Erstelle einen Pufferleser, um die Datei zeilenweise zu lesen
         let reader = BufReader::new(file);
 
@@ -222,29 +229,37 @@ fn relative_file_to_absolute_vector(filename: String) -> Vec<(f32, f32)> {
             if let Ok(line) = line {
                 // Überprüfe das Format der Zeile
                 let (x, y) = match line.chars().next() {             
-                    Some('l') => {
+                    Some('l') => { // Relative Koordinaten
                         let parts: Vec<&str> = line[1..].split(',').collect();
                         (parts[0].parse::<f32>().unwrap() + last_point.0, parts[1].parse::<f32>().unwrap() + last_point.1)
                     },
-                    Some('L') | Some('M') => {
+                    Some('L') | Some('M') => { // Absolute Koordinaten
                         let parts: Vec<&str> = line[1..].split(',').collect();
                         (parts[0].parse::<f32>().unwrap(), parts[1].parse::<f32>().unwrap())
                     },
+                    Some('z') => { // Neues Polygon
+                        p_state.push(p_connected.clone());
+                        p_connected.clear();
+                        continue;
+                    },
                     _ => {
-                        println!("Unbekanntes Format");
+                        println!("Unbekanntes Format in file {}", &filename);
                         continue;
                     }
                 };
 
+                p_connected.push((x, y));
                 last_point = (x, y);
-                absolute_points.push((x, y));
             }
+        }
+        if p_connected.len() > 0 { // falls letzte line kein "z" -> push letzte Punkte
+            p_state.push(p_connected.clone());
         }
     } else {
         println!("Die Datei konnte nicht geöffnet werden.");
     }
 
-    return absolute_points;
+    return p_state;
 }
 
 
