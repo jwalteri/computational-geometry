@@ -53,6 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let area = (connected_points[i].0 * connected_points[i + 1].1) - (connected_points[i + 1].0 * connected_points[i].1) / 2.0;
 
                 // Summiere Flächen auf
+                // TODO: wie weiß ich, ob Fläche positiv oder negativ ist? -> vgl. "Insel in Niedersachsen" mit "Berlin in Brandenburg"
                 a_ges = a_ges + sign * area;
             }
 
@@ -111,7 +112,7 @@ fn draw_polygon(name: String, points: Vec<Vec<(f32, f32)>>) -> Result<(), Box<dy
         .margin(5)
         .top_x_label_area_size(30)
         .y_label_area_size(30)
-        .build_cartesian_2d(0f32..1000f32, 1000f32..0f32)?;
+        .build_cartesian_2d(-10f32..810f32, 810f32..-10f32)?;
 
     chart.configure_mesh().draw()?;
 
