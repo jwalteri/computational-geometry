@@ -7,7 +7,6 @@ use xml::reader::XmlEvent;
 use xml::EventReader;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    blub();
 
     let states = vec![
         "Thueringen",
@@ -35,7 +34,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for state in states {
 
         let filename = format!("states/{}", state);
-        let points = read_points(format!("{}{}", &filename, ".txt"))?;
+        let points = relativeFileToAbsoluteVector(format!("{}{}", &filename, ".txt"));
 
         draw_polygon(format!("{}{}", &filename, ".png"), &points)?;
 
@@ -183,6 +182,49 @@ fn relative_to_absolute(relative_points: &Vec<(f32, f32)>) -> Vec<(f32, f32)> {
     absolute_points
 }
 
+fn relativeFileToAbsoluteVector(filename: String) -> Vec<(f32, f32)> {
+        // Vektor für die absoluten Punkte
+        let mut absolute_points = Vec::new();
+
+        // Öffne die Datei
+        if let Ok(file) = File::open(filename) {
+            // Erstelle einen Pufferleser, um die Datei zeilenweise zu lesen
+            let reader = BufReader::new(file);
+    
+            // Last point
+            let mut last_point = (0.0, 0.0);
+
+            // Durchlaufe jede Zeile in der Datei
+            for line in reader.lines() {
+                if let Ok(line) = line {
+                    // Überprüfe das Format der Zeile
+                    let (x, y) = match line.chars().next() {             
+                        Some('l') => {
+                            let parts: Vec<&str> = line[1..].split(',').collect();
+                            (parts[0].parse::<f32>().unwrap() + last_point.0, parts[1].parse::<f32>().unwrap() + last_point.1)
+                        },
+                        Some('L') | Some('M') => {
+                            let parts: Vec<&str> = line[1..].split(',').collect();
+                            (parts[0].parse::<f32>().unwrap(), parts[1].parse::<f32>().unwrap())
+                        },
+                        _ => {
+                            println!("Unbekanntes Format");
+                            continue;
+                        }
+                    };
+
+                    last_point = (x, y);
+                    absolute_points.push((x, y));
+                }
+            }
+        } else {
+            println!("Die Datei konnte nicht geöffnet werden.");
+        }
+
+        return absolute_points;
+}
+
+
 fn ccw(p1: (f32, f32), p2: (f32, f32), p3: (f32, f32)) -> f32 {
     // Berechne die Vektoren von Punkt1 nach Punkt2 und von Punkt2 nach Punkt3
     let vector1 = (p2.0 - p1.0, p2.1 - p1.1);
@@ -199,10 +241,6 @@ fn ccw(p1: (f32, f32), p2: (f32, f32), p3: (f32, f32)) -> f32 {
     } else {
         0.0  // Kollinear (liegen auf einer Linie)
     }
-}
-
-fn blub() {
-   
 }
 
 #[cfg(test)]
