@@ -29,15 +29,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "Schleswig-Holstein"
          */
 
-    let mut points_to_plot: vec::Vec<(f32, f32)> = Vec::new();
+    let mut points_to_plot: vec::Vec<Vec<(f32, f32)>> = Vec::new();
 
     for state in states {
 
         let filename = format!("states/{}", state);
         let mut points: Vec<(f32, f32)> = relative_file_to_absolute_vector(format!("{}{}", &filename, ".txt"));
 
-
-        draw_polygon(format!("{}{}", &filename, ".png"), &points)?;
+        let mut tmp: vec::Vec<Vec<(f32, f32)>> = Vec::new();
+        tmp.push(points.clone());
+        draw_polygon(format!("{}{}", &filename, ".png"), tmp)?;
 
 
         // Starte bei Punkt 0 und Ursprung
@@ -62,12 +63,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             a_ges = a_ges + sign * area;
         }
 
-        points_to_plot.append(&mut points);
+        // Füge Punkte den Plot hinzu
+        points_to_plot.push(points);
 
         println!("Fläche von {}: {}", state, a_ges.abs());
     }
 
-    draw_polygon("Deutschland.png".to_owned(), &points_to_plot)?;
+    draw_polygon("Deutschland.png".to_owned(), points_to_plot)?;
 
 
     // Berechne ccw für Punkt n und n+1
@@ -105,7 +107,7 @@ where
 }
 
 // DEPRECATED: Versucht ein Polygon zu zeichnen
-fn draw_polygon(name: String, points: &[(f32, f32)]) -> Result<(), Box<dyn std::error::Error>> {
+fn draw_polygon(name: String, points: Vec<Vec<(f32, f32)>>) -> Result<(), Box<dyn std::error::Error>> {
     let root = BitMapBackend::new(&name, (2000, 2000)).into_drawing_area();
     root.fill(&WHITE)?;
 
@@ -120,10 +122,13 @@ fn draw_polygon(name: String, points: &[(f32, f32)]) -> Result<(), Box<dyn std::
 
     chart.configure_mesh().draw()?;
 
-    chart.draw_series(LineSeries::new(
-        points.iter().cloned().cycle().take(points.len() + 1),
-        &RED,
-    ))?;
+
+    for point in points {
+        chart.draw_series(LineSeries::new(
+            point.iter().cloned().cycle().take(point.len() + 1),
+            &RED,
+        ))?;
+    }
 
     root.present()?;
     Ok(())
