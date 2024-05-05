@@ -521,7 +521,7 @@ l1.155,-0.159
 L312.004,351.725
 z
 "/>
-<path id="Schleswig-Holstein" fill="#B1D1A3" stroke="#284566" stroke-width="0.5" d="
+<path id="Schleswig-Holstein" fill="#5037b3" stroke="#284566" stroke-width="0.5" d="
 M321.984,114.018
 l0.903,3.002
 l-0.945,2.136
@@ -3411,7 +3411,7 @@ l0.23,-0.011
 L231.536,350.825
 z
 "/>
-<path id="Niedersachsen" fill="#B1D1A3" stroke="#284566" stroke-width="0.5" d="
+<path id="Niedersachsen" fill="#a12315" stroke="#284566" stroke-width="0.5" d="
 M176.903,149.425
 l-0.914,-2.178
 l-1.179,-3.024
@@ -4554,7 +4554,7 @@ l-0.554,0.424
 L68.587,150.948
 z
 "/>
-<path id="Mecklenburg-Vorpommern" fill="#B1D1A3" stroke="#284566" stroke-width="0.5" d="
+<path id="Mecklenburg-Vorpommern" fill="#1a7561" stroke="#284566" stroke-width="0.5" d="
 M321.984,114.018
 l4.559,-3.108
 l2.955,-1.767
@@ -5996,7 +5996,7 @@ l-0.043,0.138
 L262.476,379.055
 z
 "/>
-<path id="Hamburg" fill="#B1D1A3" stroke="#284566" stroke-width="0.5" d="
+<path id="Hamburg" fill="#92a112" stroke="#284566" stroke-width="0.5" d="
 M250.76,155.304
 l0.45,-2.274
 l0.423,-1.553
@@ -6090,7 +6090,7 @@ l0.000,-2.822
 L250.76,155.304
 z
 "/>
-<path id="Bremen" fill="#B1D1A3" stroke="#284566" stroke-width="0.5" d="
+<path id="Bremen" fill="#621c85" stroke="#284566" stroke-width="0.5" d="
 M178.358,158.232
 l0.574,-0.37
 l0.181,-0.456
@@ -6169,7 +6169,7 @@ l1.01,-0.382
 L204.24,198.642
 z
 "/>
-<path id="Brandenburg" fill="#B1D1A3" stroke="#284566" stroke-width="0.5" d="
+<path id="Brandenburg" fill="#998522" stroke="#284566" stroke-width="0.5" d="
 M538.222,170.708
 l-0.212,2.051
 l1.063,3.289
@@ -6805,7 +6805,7 @@ l-1.066,-0.582
 L479.231,243.809
 z
 "/>
-<path id="Berlin" fill="#B1D1A3" stroke="#284566" stroke-width="0.5" d="
+<path id="Berlin" fill="#229997" stroke="#284566" stroke-width="0.5" d="
 M479.231,243.809
 l0.545,0.477
 l1.067,0.58

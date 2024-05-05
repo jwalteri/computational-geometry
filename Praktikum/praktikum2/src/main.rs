@@ -6,38 +6,30 @@ use plotters::prelude::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 
-    let states = vec![
-        "Thueringen",
-        "Bayern",
-        ];
+    // Speichere die Koordinaten der Bundesländer aus Deutschland in jeweils eigene .txt-Dateien
+    //save_coordinates_from_each_state();
 
-        /*
-                "Sachsen",
-        "Sachsen-Anhalt",
-        "Niedersachsen",
-        "Mecklenburg-Vorpommern",
-        "Hessen",
-        "Hamburg",
-        "Bremen",
-        "Brandenburg",
-        "Berlin",
-        "Bayern",
-        "Baden-Wuerttemberg",
-        "Nordrhein-Westfalen",
-        "Rheinland-Pfalz",
-        "Saarland",
-        "Schleswig-Holstein",
-         */
+    // Lese die Dateien im Verzeichnis "states" ein
+    let states_path = "states";
+    let dir_entries = std::fs::read_dir(states_path)?;
 
-    let mut points_to_plot: vec::Vec<Vec<(f32, f32)>> = Vec::new();
+    // Erstelle einen Vektor für die Dateinamen (Bundesländer) der .txt-Dateien
+    let file_ending = ".txt".to_string();
+    let mut states: Vec<String> = Vec::new();
+    get_files_with_ending(&mut states, dir_entries, &file_ending)?;
+    
+    let mut germany_plot: vec::Vec<Vec<(f32, f32)>> = Vec::new();
 
     for state in states {
 
         let filename = format!("states/{}", state);
-        let mut points: Vec<(f32, f32)> = relative_file_to_absolute_vector(format!("{}{}", &filename, ".txt"));
+        let mut state_points: Vec<Vec<(f32, f32)>> = relative_file_to_absolute_vector(format!("{}{}", &filename, ".txt"));
 
+        // Zeichne jedes Bundesland einzeln in "state.png"
         let mut tmp: vec::Vec<Vec<(f32, f32)>> = Vec::new();
-        tmp.push(points.clone());
+        for p in &mut state_points {
+            tmp.push(p.clone())
+        }
         draw_polygon(format!("{}{}", &filename, ".png"), tmp)?;
 
 
@@ -48,14 +40,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut d_ges = 0.0;
         let mut t_ges = 0.0;
 
-        // Wähle Punkte n und n+1
-        for i in 0..points.len() - 1 {
+        for connected_points in &mut state_points {
+            // Wähle Punkte n und n+1 aus letztem points-Vector
+            for i in 0..connected_points.len() - 1 {
 
-            // Punkte ausgabe von points[i], points[i + 1]
-            //println!("Punkt {}: ({},{}), Punkt {}: ({},{})", i, points[i].0, points[i].1, i + 1, points[i + 1].0, points[i + 1].1);
+                // Punkte ausgabe von points[i], points[i + 1]
+                //println!("Punkt {}: ({},{}), Punkt {}: ({},{})", i, points[i].0, points[i].1, i + 1, points[i + 1].0, points[i + 1].1);
 
-            // Berechne ccw für Punkt n und n+1
-            let sign = ccw(ursprung, points[i], points[i + 1]);
+                // Berechne ccw für Punkt n und n+1
+                let sign = ccw(ursprung, connected_points[i], connected_points[i + 1]);
 
             // Flächeninhalt berechnen
             let dArea = (points[i].0 * points[i + 1].1) - (points[i + 1].0 * points[i].1) / 2.0;
@@ -85,7 +78,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("dreieck_shoelace_formel von {}: {}", state, dreieck_shoelace_formel_area.abs());
     }
 
-    draw_polygon("Deutschland.png".to_owned(), points_to_plot)?;
+    draw_polygon("Deutschland.png".to_owned(), germany_plot)?;
 
 
     // Berechne ccw für Punkt n und n+1
@@ -97,7 +90,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+// Lese die "ending" Dateien im Verzeichnis "dir_entries" ein und übergebe die Dateinamen als Vektor
+fn get_files_with_ending(states: &mut Vec<String>, dir_entries: std::fs::ReadDir, ending: &String) -> Result<(), Box<dyn std::error::Error>> {
 
+    for entry in dir_entries {
+        let entry = entry?;
+        let file_name = entry.file_name();
+        if let Some(file_str) = file_name.to_str() {
+            if file_str.ends_with(ending) {
+                if let Some(file_stem) = Path::new(file_str).file_stem() {
+                    if let Some(file_name_str) = file_stem.to_str() {
+                        states.push(file_name_str.to_string());
+                    }
+                }
+            }
 fn dreieck_shoelace_formel(points: &[(f32, f32)]) -> f32 {
     let mut area: f32 = 0.0;
     let n = points.len();
@@ -136,11 +142,12 @@ where
             points.push((coords[0], coords[1]));
         }
     }
+    Ok(())
+}
 
-    // Konvertierung der relativen Punkte in absolute Koordinaten
-    let absolute_points: Vec<(f32, f32)> = relative_to_absolute(&points);
-
-    Ok(absolute_points)
+// TODO: ~low prio~ Speichert die Koordinaten der Bundesländer aus DeutschlandMitStaedten.svg in jeweils einer "state".txt Datei
+fn save_coordinates_from_each_state(){
+    
 }
 
 // DEPRECATED: Versucht ein Polygon zu zeichnen
@@ -155,7 +162,7 @@ fn draw_polygon(name: String, points: Vec<Vec<(f32, f32)>>) -> Result<(), Box<dy
         .margin(5)
         .top_x_label_area_size(30)
         .y_label_area_size(30)
-        .build_cartesian_2d(0f32..1000f32, 1000f32..0f32)?;
+        .build_cartesian_2d(-10f32..810f32, 810f32..-10f32)?;
 
     chart.configure_mesh().draw()?;
 
@@ -171,107 +178,57 @@ fn draw_polygon(name: String, points: Vec<Vec<(f32, f32)>>) -> Result<(), Box<dy
     Ok(())
 }
 
-// Transformiert die relativen Punkte zu absoluten Punkten (OLD -> delete)
-fn relative_to_absolute(relative_points: &Vec<(f32, f32)>) -> Vec<(f32, f32)> {
-    // Ursprungskoordinaten
-    let origin_x = relative_points[0].0;
-    let origin_y = relative_points[0].1;
-    
+// Lese die Datei Zeile für Zeile ein und konvertiere die relativen Koordinaten in absolute Koordinaten bzw. behalte die absoluten Koordinaten
+fn relative_file_to_absolute_vector(filename: String) -> Vec<Vec<(f32, f32)>> {
 
-    let mut absolute_points = Vec::new();
-    let mut current_x = origin_x;
-    let mut current_y = origin_y;
+    // Vektor für die absoluten Punkte
+    let mut p_connected = Vec::new();
+    let mut p_state = Vec::new();
 
-    let firstPoint = relative_points[0];
-    let mut f2Point: (f32, f32) = (0.0,0.0);
-    let mut f2Point2: (f32, f32) = (0.0,0.0);
+    // Öffne die Datei
+    if let Ok(file) = File::open(&filename) {
+        // Erstelle einen Pufferleser, um die Datei zeilenweise zu lesen
+        let reader = BufReader::new(file);
 
-    // Bayern
-    if firstPoint == (393.093,474.992) {
-        f2Point = (275.0,712.497);
-        f2Point2 = (275.0,574.206);
-    }
-    // Thüringen
-    if firstPoint == (312.004,351.725) {
-        f2Point = (265.601,388.0);
-        f2Point2 = (100000.0,1000000.0);
-    }
+        // Last point
+        let mut last_point = (0.0, 0.0);
 
+        // Durchlaufe jede Zeile in der Datei
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                // Überprüfe das Format der Zeile
+                let (x, y) = match line.chars().next() {             
+                    Some('l') => { // Relative Koordinaten
+                        let parts: Vec<&str> = line[1..].split(',').collect();
+                        (parts[0].parse::<f32>().unwrap() + last_point.0, parts[1].parse::<f32>().unwrap() + last_point.1)
+                    },
+                    Some('L') | Some('M') => { // Absolute Koordinaten
+                        let parts: Vec<&str> = line[1..].split(',').collect();
+                        (parts[0].parse::<f32>().unwrap(), parts[1].parse::<f32>().unwrap())
+                    },
+                    Some('z') => { // Neues Polygon
+                        p_state.push(p_connected.clone());
+                        p_connected.clear();
+                        continue;
+                    },
+                    _ => {
+                        println!("Unbekanntes Format in file {}", &filename);
+                        continue;
+                    }
+                };
 
-
-
-    for &(x, y) in relative_points {
-        if firstPoint == (x, y) {
-            current_x = firstPoint.0;
-            current_y = firstPoint.1;
-            absolute_points.push((current_x, current_y));
-            continue;
-        }
-
-        if f2Point == (x, y) {
-            current_x = f2Point.0;
-            current_y = f2Point.1;
-            absolute_points.push((current_x, current_y));
-            continue;
-        }
-
-        if f2Point2 == (x, y) {
-            current_x = f2Point2.0;
-            current_y = f2Point2.1;
-            absolute_points.push((current_x, current_y));
-            continue;
-        }
-
-        let absolute_x = current_x + x;
-        let absolute_y = current_y + y;
-        absolute_points.push((absolute_x, absolute_y));
-        current_x = absolute_x;
-        current_y = absolute_y;
-    }
-
-    absolute_points
-}
-
-fn relative_file_to_absolute_vector(filename: String) -> Vec<(f32, f32)> {
-        // Vektor für die absoluten Punkte
-        let mut absolute_points = Vec::new();
-
-        // Öffne die Datei
-        if let Ok(file) = File::open(filename) {
-            // Erstelle einen Pufferleser, um die Datei zeilenweise zu lesen
-            let reader = BufReader::new(file);
-    
-            // Last point
-            let mut last_point = (0.0, 0.0);
-
-            // Durchlaufe jede Zeile in der Datei
-            for line in reader.lines() {
-                if let Ok(line) = line {
-                    // Überprüfe das Format der Zeile
-                    let (x, y) = match line.chars().next() {             
-                        Some('l') => {
-                            let parts: Vec<&str> = line[1..].split(',').collect();
-                            (parts[0].parse::<f32>().unwrap() + last_point.0, parts[1].parse::<f32>().unwrap() + last_point.1)
-                        },
-                        Some('L') | Some('M') => {
-                            let parts: Vec<&str> = line[1..].split(',').collect();
-                            (parts[0].parse::<f32>().unwrap(), parts[1].parse::<f32>().unwrap())
-                        },
-                        _ => {
-                            println!("Unbekanntes Format");
-                            continue;
-                        }
-                    };
-
-                    last_point = (x, y);
-                    absolute_points.push((x, y));
-                }
+                p_connected.push((x, y));
+                last_point = (x, y);
             }
-        } else {
-            println!("Die Datei konnte nicht geöffnet werden.");
         }
+        if p_connected.len() > 0 { // falls letzte line kein "z" -> push letzte Punkte
+            p_state.push(p_connected.clone());
+        }
+    } else {
+        println!("Die Datei konnte nicht geöffnet werden.");
+    }
 
-        return absolute_points;
+    return p_state;
 }
 
 
