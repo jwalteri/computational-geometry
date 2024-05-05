@@ -9,7 +9,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let states = vec![
         "Thueringen",
         "Bayern",
-        "Saarland",
         ];
 
         /*
@@ -27,7 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "Nordrhein-Westfalen",
         "Rheinland-Pfalz",
         "Saarland",
-        "Schleswig-Holstein"
+        "Schleswig-Holstein",
          */
 
     let mut points_to_plot: vec::Vec<Vec<(f32, f32)>> = Vec::new();
@@ -46,7 +45,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let ursprung = (0.0, 0.0);
 
         // Gesamtfläche
-        let mut a_ges = 0.0;
+        let mut d_ges = 0.0;
+        let mut t_ges = 0.0;
 
         // Wähle Punkte n und n+1
         for i in 0..points.len() - 1 {
@@ -58,16 +58,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let sign = ccw(ursprung, points[i], points[i + 1]);
 
             // Flächeninhalt berechnen
-            let area = (points[i].0 * points[i + 1].1) - (points[i + 1].0 * points[i].1) / 2.0;
+            let dArea = (points[i].0 * points[i + 1].1) - (points[i + 1].0 * points[i].1) / 2.0;
+
+            // Trapezfläche berechnen
+            let tArea = (points[i].1 + points[i + 1].1) / 2.0 * (points[i].0 - points[i + 1].0);
+
 
             // Summiere Flächen auf
-            a_ges = a_ges + sign * area;
+            d_ges = d_ges + sign * dArea;
+            t_ges = t_ges + sign * tArea;
         }
+
+        // Shoelace-Formel
+        let shoelace_area = shoelace_formel(&points);
+
+        // Dreiecks-Shoelace-Formel
+        let dreieck_shoelace_formel_area = dreieck_shoelace_formel(&points);
 
         // Füge Punkte den Plot hinzu
         points_to_plot.push(points);
 
-        println!("Fläche von {}: {}", state, a_ges.abs());
+        println!("Dreiecksfläche von {}: {}", state, d_ges.abs());
+        println!("Trapezfläche von {}: {}", state, t_ges.abs());
+        println!("Trapezfläche von {}: {}", state, t_ges.abs());
+        println!("Shoelace-Formel von {}: {}", state, shoelace_area.abs());
+        println!("dreieck_shoelace_formel von {}: {}", state, dreieck_shoelace_formel_area.abs());
     }
 
     draw_polygon("Deutschland.png".to_owned(), points_to_plot)?;
@@ -82,6 +97,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+
+fn dreieck_shoelace_formel(points: &[(f32, f32)]) -> f32 {
+    let mut area: f32 = 0.0;
+    let n = points.len();
+    for i in 0..n {
+        let j = (i + 1) % n;
+        area += (points[i].0 * points[j].1) - (points[j].0 * points[i].1);
+    }
+    area.abs() / 2.0
+}
+
+fn shoelace_formel(points: &[(f32, f32)]) -> f32 {
+    let mut area = 0.0;
+    let n = points.len();
+    for i in 0..n {
+        let j = (i + 1) % n;
+        area += points[i].0 * points[j].1;
+        area -= points[j].0 * points[i].1;
+    }
+    area.abs() / 2.0
+}
 
 fn read_points<P>(filename: P) -> io::Result<Vec<(f32, f32)>>
 where
