@@ -5,7 +5,6 @@ use std::vec;
 use plotters::prelude::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-
     // Speichere die Koordinaten der Bundesländer aus Deutschland in jeweils eigene .txt-Dateien
     //save_coordinates_from_each_state();
 
@@ -21,7 +20,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut germany_plot: vec::Vec<Vec<(f32, f32)>> = Vec::new();
 
     for state in states {
-
         let filename = format!("states/{}", state);
         let mut state_points: Vec<Vec<(f32, f32)>> = relative_file_to_absolute_vector(format!("{}{}", &filename, ".txt"));
 
@@ -39,56 +37,48 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Gesamtfläche
         let mut d_ges = 0.0;
         let mut t_ges = 0.0;
+        let mut s_ges = 0.0; // Shoelace-Formel
+        let mut ds_ges = 0.0; // Dreiecks-Shoelace-Formel
 
         for connected_points in &mut state_points {
             // Wähle Punkte n und n+1 aus letztem points-Vector
             for i in 0..connected_points.len() - 1 {
 
-                // Punkte ausgabe von points[i], points[i + 1]
-                //println!("Punkt {}: ({},{}), Punkt {}: ({},{})", i, points[i].0, points[i].1, i + 1, points[i + 1].0, points[i + 1].1);
+                    // Punkte ausgabe von points[i], points[i + 1]
+                    //println!("Punkt {}: ({},{}), Punkt {}: ({},{})", i, points[i].0, points[i].1, i + 1, points[i + 1].0, points[i + 1].1);
 
-                // Berechne ccw für Punkt n und n+1
-                let sign = ccw(ursprung, connected_points[i], connected_points[i + 1]);
+                    // Berechne ccw für Punkt n und n+1
+                    let sign = ccw(ursprung, connected_points[i], connected_points[i + 1]);
 
-            // Flächeninhalt berechnen
-            let dArea = (points[i].0 * points[i + 1].1) - (points[i + 1].0 * points[i].1) / 2.0;
+                // Flächeninhalt berechnen
+                let dArea = (connected_points[i].0 * connected_points[i + 1].1) - (connected_points[i + 1].0 * connected_points[i].1) / 2.0;
 
-            // Trapezfläche berechnen
-            let tArea = (points[i].1 + points[i + 1].1) / 2.0 * (points[i].0 - points[i + 1].0);
+                // Trapezfläche berechnen
+                let tArea = (connected_points[i].1 + connected_points[i + 1].1) / 2.0 * (connected_points[i].0 - connected_points[i + 1].0);
 
 
-            // Summiere Flächen auf
-            d_ges = d_ges + sign * dArea;
-            t_ges = t_ges + sign * tArea;
+                // Summiere Flächen auf
+                d_ges = d_ges + sign * dArea;
+                t_ges = t_ges + sign * tArea;
+            }
+
+            s_ges += shoelace_formel(&connected_points);
+            ds_ges += dreieck_shoelace_formel(&connected_points);
+
+            // Füge die Punkte zum Deutschland-Plot hinzu
+            germany_plot.push(connected_points.clone());
         }
 
-        // Shoelace-Formel
-        let shoelace_area = shoelace_formel(&points);
-
-        // Dreiecks-Shoelace-Formel
-        let dreieck_shoelace_formel_area = dreieck_shoelace_formel(&points);
-
-        // Füge Punkte den Plot hinzu
-        points_to_plot.push(points);
-
-        println!("Dreiecksfläche von {}: {}", state, d_ges.abs());
-        println!("Trapezfläche von {}: {}", state, t_ges.abs());
-        println!("Trapezfläche von {}: {}", state, t_ges.abs());
-        println!("Shoelace-Formel von {}: {}", state, shoelace_area.abs());
-        println!("dreieck_shoelace_formel von {}: {}", state, dreieck_shoelace_formel_area.abs());
+        //println!("Dreiecksfläche von {}: {}", state, d_ges.abs());
+        //println!("Trapezfläche von {}: {}", state, t_ges.abs());
+        println!("Shoelace-Formel von {}: {}", state, s_ges.abs());
+        //println!("dreieck_shoelace_formel von {}: {}", state, ds_ges.abs());
     }
 
-    draw_polygon("Deutschland.png".to_owned(), germany_plot)?;
-
-
-    // Berechne ccw für Punkt n und n+1
-    // Berechne Fläche: A = (x_n * y_n+1) - (x_n+1 * y_n)/2
-    // Summiere Flächen auf: Ages += ccw * A
-
-
-
+        draw_polygon("Deutschland.png".to_owned(), germany_plot)?;
     Ok(())
 }
+
 
 // Lese die "ending" Dateien im Verzeichnis "dir_entries" ein und übergebe die Dateinamen als Vektor
 fn get_files_with_ending(states: &mut Vec<String>, dir_entries: std::fs::ReadDir, ending: &String) -> Result<(), Box<dyn std::error::Error>> {
@@ -104,6 +94,11 @@ fn get_files_with_ending(states: &mut Vec<String>, dir_entries: std::fs::ReadDir
                     }
                 }
             }
+        }
+    }
+    Ok(())
+}
+
 fn dreieck_shoelace_formel(points: &[(f32, f32)]) -> f32 {
     let mut area: f32 = 0.0;
     let n = points.len();
@@ -123,26 +118,6 @@ fn shoelace_formel(points: &[(f32, f32)]) -> f32 {
         area -= points[j].0 * points[i].1;
     }
     area.abs() / 2.0
-}
-
-fn read_points<P>(filename: P) -> io::Result<Vec<(f32, f32)>>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(filename)?;
-    let reader = io::BufReader::new(file);
-    let mut points: Vec<(f32, f32)> = Vec::new();
-
-    for line in reader.lines() {
-        let line = line?;
-        let coords: Vec<f32> = line.split(',')
-                                   .map(|s| s.parse().unwrap())
-                                   .collect();
-        if coords.len() == 2 {
-            points.push((coords[0], coords[1]));
-        }
-    }
-    Ok(())
 }
 
 // TODO: ~low prio~ Speichert die Koordinaten der Bundesländer aus DeutschlandMitStaedten.svg in jeweils einer "state".txt Datei
