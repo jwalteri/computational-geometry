@@ -23,56 +23,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let filename = format!("states/{}", state);
         let mut state_points: Vec<Vec<(f32, f32)>> = relative_file_to_absolute_vector(format!("{}{}", &filename, ".txt"));
 
-        // Zeichne jedes Bundesland einzeln in "state.png"
+        // Zeichne jedes Bundesland einzeln in "state.png"s
         let mut tmp: vec::Vec<Vec<(f32, f32)>> = Vec::new();
         for p in &mut state_points {
             tmp.push(p.clone())
         }
         draw_polygon(format!("{}{}", &filename, ".png"), tmp)?;
 
-
-        // Starte bei Punkt 0 und Ursprung
-        let ursprung = (0.0, 0.0);
-
         // Gesamtfläche
-        let mut d_ges = 0.0;
-        let mut t_ges = 0.0;
         let mut s_ges = 0.0; // Shoelace-Formel
-        let mut ds_ges = 0.0; // Dreiecks-Shoelace-Formel
+        //let mut ds_ges = 0.0; // Dreiecks-Shoelace-Formel
 
         for connected_points in &mut state_points {
-            // Wähle Punkte n und n+1 aus letztem points-Vector
-            for i in 0..connected_points.len() - 1 {
-
-                    // Punkte ausgabe von points[i], points[i + 1]
-                    //println!("Punkt {}: ({},{}), Punkt {}: ({},{})", i, points[i].0, points[i].1, i + 1, points[i + 1].0, points[i + 1].1);
-
-                    // Berechne ccw für Punkt n und n+1
-                    let sign = ccw(ursprung, connected_points[i], connected_points[i + 1]);
-
-                // Flächeninhalt berechnen
-                let dArea = (connected_points[i].0 * connected_points[i + 1].1) - (connected_points[i + 1].0 * connected_points[i].1) / 2.0;
-
-                // Trapezfläche berechnen
-                let tArea = (connected_points[i].1 + connected_points[i + 1].1) / 2.0 * (connected_points[i].0 - connected_points[i + 1].0);
-
-
-                // Summiere Flächen auf
-                d_ges = d_ges + sign * dArea;
-                t_ges = t_ges + sign * tArea;
-            }
 
             s_ges += shoelace_formel(&connected_points);
-            ds_ges += dreieck_shoelace_formel(&connected_points);
+            // ds_ges += dreieck_shoelace_formel(&connected_points);
 
             // Füge die Punkte zum Deutschland-Plot hinzu
             germany_plot.push(connected_points.clone());
         }
 
-        //println!("Dreiecksfläche von {}: {}", state, d_ges.abs());
-        //println!("Trapezfläche von {}: {}", state, t_ges.abs());
         println!("Shoelace-Formel von {}: {}", state, s_ges.abs());
-        //println!("dreieck_shoelace_formel von {}: {}", state, ds_ges.abs());
     }
 
         draw_polygon("Deutschland.png".to_owned(), germany_plot)?;
@@ -206,36 +177,12 @@ fn relative_file_to_absolute_vector(filename: String) -> Vec<Vec<(f32, f32)>> {
     return p_state;
 }
 
-
-fn ccw(p1: (f32, f32), p2: (f32, f32), p3: (f32, f32)) -> f32 {
-    // Berechne die Vektoren von Punkt1 nach Punkt2 und von Punkt2 nach Punkt3
-    let vector1 = (p2.0 - p1.0, p2.1 - p1.1);
-    let vector2 = (p3.0 - p2.0, p3.1 - p2.1);
-    
-    // Berechne das Kreuzprodukt
-    let cross_product = vector1.0 * vector2.1 - vector1.1 * vector2.0;
-    
-    // Überprüfe das Vorzeichen des Kreuzprodukts
-    if cross_product > 0.0 {
-        1.0  // Gegen den Uhrzeigersinn
-    } else if cross_product < 0.0 {
-        -1.0  // Im Uhrzeigersinn
-    } else {
-        0.0  // Kollinear (liegen auf einer Linie)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_ccw() {
-        let p1 = (0.0, 0.0);
-        let p2 = (1.0, 1.0);
-        let p3 = (2.0, 0.0);
-
-        assert_eq!(ccw(p1, p2, p3), -1.0);
     }
 }
 
