@@ -19,9 +19,58 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     let mut germany_plot: vec::Vec<Vec<(f32, f32)>> = Vec::new();
 
+    let mut state_vector: Vec<State> = Vec::new();
+
     for state in states {
         let filename = format!("states/{}", state);
         let state_points: Vec<Vec<(f32, f32)>> = relative_file_to_absolute_vector(format!("{}{}", &filename, ".txt"));
+
+        let mut state = State {
+            name: state.clone(),
+            polygon: Polygon {
+                points: state_points[0].clone()
+            },
+            insel: Vec::new(),
+            loch: Vec::new()
+        };
+
+        //state.set_holes_and_islands(state_points[1..].to_vec());
+        state.set_holes_and_islands(state_points);
+
+        state_vector.push(state);
+    }
+
+    for state in &state_vector {
+        println!("Bundesland: {}", state.name);
+        println!("Fläche: {}", state.get_area());
+        state.draw()?;
+    }
+
+    for city in get_cities() {
+        for state in &state_vector {
+            if state.is_point_inside((city.x, city.y)) {
+                println!("Die Stadt {} liegt in {}", city.name, state.name);
+            }
+        }
+    }
+
+    // Alle Punkte zu Deutschland zusammenfassen
+    for state in &state_vector {
+        for points in state.get_points() {
+            for p in points {
+                germany_plot.push(vec![p.clone()]);
+            }
+        }
+    }
+    
+    draw_polygon("Deutschland.png".to_owned(), germany_plot)?;
+
+
+    println!("asdasd");
+
+
+/* 
+    for state in states {
 
         println!("Bundesland: {}", state);
 
@@ -70,6 +119,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
         draw_polygon("Deutschland.png".to_owned(), germany_plot)?;
+        */
     Ok(())
 }
 
@@ -77,6 +127,33 @@ struct City {
     name: String,
     x: f32,
     y: f32,
+}
+
+// Get Cities
+fn get_cities() -> Vec<City> {
+    let file = File::open("cities/cities.txt").expect("Konnte Datei nicht öffnen");
+    let reader = BufReader::new(file);
+
+    let mut cities = Vec::new();
+
+    for line in reader.lines() {
+        if let Ok(line) = line {
+            let parts: Vec<&str> = line.split(',').collect();
+            if parts.len() == 3 {
+                let name = parts[0].to_string();
+                if let (Ok(x), Ok(y)) = (parts[1].parse::<f32>(), parts[2].parse::<f32>()) {
+                    let city = City { name, x, y };
+                    cities.push(city);
+                } else {
+                    eprintln!("Fehler beim Parsen der Koordinaten für Stadt: {}", name);
+                }
+            } else {
+                eprintln!("Ungültiges Format für Zeile: {}", line);
+            }
+        }
+    }
+
+    cities
 }
 
 // TODO: Fang bei den kleinsten Polygonen an und arbeite dich zu den größten vor
@@ -270,12 +347,95 @@ mod tests {
 }
 
 struct Polygon {
-    points: Vec<Vec<(f32, f32)>>
+    points: Vec<(f32, f32)>
 }
 
 struct State {
     name: String,
     polygon: Polygon,
-    external: Vec<Polygon>,
-    internal: Vec<Polygon>
+    insel: Vec<Polygon>,
+    loch: Vec<Polygon>
+}
+
+impl State {
+    fn set_holes_and_islands(&mut self, points: Vec<Vec<(f32, f32)>>) {
+        for (i, e) in points.iter().enumerate() {
+            let mut is_hole = false;
+
+            if i == 0 {
+                continue;
+            }
+            is_hole = point_inside_polygon(e[0], &points[0]);
+            
+            if is_hole {
+                self.loch.push(Polygon {
+                    points: e.clone()
+                });
+            } else {
+                self.insel.push(Polygon {
+                    points: e.clone()
+                });
+            }
+        }
+    }
+
+    fn get_area(&self) -> f32 {
+        let mut area = 0.0;
+        area += shoelace_formel(&self.polygon.points);
+        for insel in &self.insel {
+            area += shoelace_formel(&insel.points);
+        }
+        for loch in &self.loch {
+            area -= shoelace_formel(&loch.points);
+        }
+        area
+    }
+
+    // Funktion: Punkt in Polygon
+    fn is_point_inside(&self, point: (f32, f32)) -> bool {
+        let mut inside = point_inside_polygon(point, &self.polygon.points);
+
+        for loch in &self.loch {
+            inside = point_inside_polygon(point, &loch.points);
+            if inside {
+                return false;
+            }
+        }
+
+        for insel in &self.insel {
+            inside = point_inside_polygon(point, &insel.points);
+            if inside {
+                return true;
+            }
+        }
+
+        inside
+    }
+
+    // Get points for drawing
+    fn get_points(&self) -> Vec<Vec<(f32, f32)>> {
+        let mut points = Vec::new();
+        points.push(self.polygon.points.clone());
+        for insel in &self.insel {
+            points.push(insel.points.clone());
+        }
+        for loch in &self.loch {
+            points.push(loch.points.clone());
+        }
+        points
+    }
+
+    // Draw myself
+    fn draw(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let mut points = Vec::new();
+        points.push(self.polygon.points.clone());
+        for insel in &self.insel {
+            points.push(insel.points.clone());
+        }
+        for loch in &self.loch {
+            points.push(loch.points.clone());
+        }
+        draw_polygon(format!("states/{}.png", self.name), points)?;
+        Ok(())
+    }
 }
