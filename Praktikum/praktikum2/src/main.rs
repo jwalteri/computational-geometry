@@ -1,13 +1,10 @@
 use std::fs::File;
-use std::io::{self, BufRead, BufReader};
+use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::vec;
 use plotters::prelude::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Speichere die Koordinaten der Bundesländer aus Deutschland in jeweils eigene .txt-Dateien
-    //save_coordinates_from_each_state();
-
     // Lese die Dateien im Verzeichnis "states" ein
     let states_path = "states";
     let dir_entries = std::fs::read_dir(states_path)?;
@@ -34,7 +31,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             loch: Vec::new()
         };
 
-        //state.set_holes_and_islands(state_points[1..].to_vec());
         state.set_holes_and_islands(state_points);
 
         state_vector.push(state);
@@ -45,8 +41,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Fläche: {}", state.get_area());
         //state.draw()?;
     }
-
-    let cities = get_cities();
 
     for city in get_cities() {
         for state in &state_vector {
@@ -59,69 +53,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Alle Punkte zu Deutschland zusammenfassen
     for state in &state_vector {
         for points in state.get_points() {
-            for p in points {
-                germany_plot.push(vec![p.clone()]);
-            }
+            germany_plot.push(points.clone());
         }
     }
     
     draw_polygon("Deutschland.png".to_owned(), germany_plot)?;
 
-
-    println!("asdasd");
-
-
-/* 
-    for state in states {
-
-        println!("Bundesland: {}", state);
-
-        // Zeichne jedes Bundesland einzeln in "state.png"s
-        let mut tmp: vec::Vec<Vec<(f32, f32)>> = Vec::new();
-        for p in &state_points {
-            tmp.push(p.clone())
-        }
-        draw_polygon(format!("{}{}", &filename, ".png"), tmp)?;
-
-        // Gesamtfläche
-        let mut s_ges = 0.0; // Shoelace-Formel
-        //let mut ds_ges = 0.0; // Dreiecks-Shoelace-Formel
-
-            let len = state_points.clone().len();
-
-            // Kiel fehlt
-            // Potsdam fehlt
-        for (i, e) in state_points.iter().enumerate() {
-            let part_size = shoelace_formel(e);
-
-            let mut is_hole = false;
-            for (j, el) in state_points.iter().enumerate() {
-                if i != j {
-                    is_hole = point_inside_polygon(state_points[i][0], e);
-                    
-                    if is_hole {
-                        println!("Hole gefunden in {}!", state);
-                        break;
-                    }
-                }
-            }
-            
-            if is_hole {
-                s_ges -= part_size;
-            } else {
-                s_ges += part_size;
-                check_cities(e)
-            }
-
-            // Füge die Punkte zum Deutschland-Plot hinzu
-            germany_plot.push(e.clone());
-        }
-
-        println!("Shoelace-Formel von {}: {}", state, s_ges.abs());
-    }
-
-        draw_polygon("Deutschland.png".to_owned(), germany_plot)?;
-        */
     Ok(())
 }
 
@@ -156,40 +93,6 @@ fn get_cities() -> Vec<City> {
     }
 
     cities
-}
-
-// TODO: Fang bei den kleinsten Polygonen an und arbeite dich zu den größten vor
-// Gefundene Städte aus Vektor entfernen
-fn check_cities(polygon: &[(f32, f32)]) {
-    let file = File::open("cities/cities.txt").expect("Konnte Datei nicht öffnen");
-    let reader = BufReader::new(file);
-
-    let mut cities = Vec::new();
-
-    for line in reader.lines() {
-        if let Ok(line) = line {
-            let parts: Vec<&str> = line.split(',').collect();
-            if parts.len() == 3 {
-                let name = parts[0].to_string();
-                if let (Ok(x), Ok(y)) = (parts[1].parse::<f32>(), parts[2].parse::<f32>()) {
-                    let city = City { name, x, y };
-                    cities.push(city);
-                } else {
-                    eprintln!("Fehler beim Parsen der Koordinaten für Stadt: {}", name);
-                }
-            } else {
-                eprintln!("Ungültiges Format für Zeile: {}", line);
-            }
-        }
-    }
-
-    for city in cities {
-        let point = (city.x, city.y);
-        let inside = point_inside_polygon(point, polygon);
-        if inside {
-            println!("Die Stadt {} liegt hier!", city.name);
-        }
-    }
 }
 
 fn point_inside_polygon(point: (f32, f32), polygon: &[(f32, f32)]) -> bool {
@@ -251,11 +154,6 @@ fn shoelace_formel(points: &[(f32, f32)]) -> f32 {
         area -= points[j].0 * points[i].1;
     }
     area.abs() / 2.0
-}
-
-// TODO: ~low prio~ Speichert die Koordinaten der Bundesländer aus DeutschlandMitStaedten.svg in jeweils einer "state".txt Datei
-fn save_coordinates_from_each_state(){
-    
 }
 
 // DEPRECATED: Versucht ein Polygon zu zeichnen
@@ -339,15 +237,6 @@ fn relative_file_to_absolute_vector(filename: String) -> Vec<Vec<(f32, f32)>> {
     return p_state;
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn point_inside_polygon_1() {
-    }
-}
-
 struct Polygon {
     points: Vec<(f32, f32)>
 }
@@ -362,7 +251,7 @@ struct State {
 impl State {
     fn set_holes_and_islands(&mut self, points: Vec<Vec<(f32, f32)>>) {
         for (i, e) in points.iter().enumerate() {
-            let mut is_hole = false;
+            let is_hole;
 
             if i == 0 {
                 continue;
