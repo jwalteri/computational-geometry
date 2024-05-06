@@ -26,11 +26,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Bundesland: {}", state);
 
         // Zeichne jedes Bundesland einzeln in "state.png"s
-        //let mut tmp: vec::Vec<Vec<(f32, f32)>> = Vec::new();
-        //for p in &state_points {
-        //    tmp.push(p.clone())
-        //}
-        //draw_polygon(format!("{}{}", &filename, ".png"), tmp)?;
+        let mut tmp: vec::Vec<Vec<(f32, f32)>> = Vec::new();
+        for p in &state_points {
+            tmp.push(p.clone())
+        }
+        draw_polygon(format!("{}{}", &filename, ".png"), tmp)?;
 
         // Gesamtfläche
         let mut s_ges = 0.0; // Shoelace-Formel
@@ -38,36 +38,35 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let len = state_points.clone().len();
 
-            for i in 0..len {
+            // Kiel fehlt
+            // Potsdam fehlt
+        for (i, e) in state_points.iter().enumerate() {
+            let part_size = shoelace_formel(e);
 
-                let current = state_points[i].clone();
-
-                // Ist es eine Insel oder ein Loch?
-                for j in 0..len {
-                    if i != j {
-                        if point_inside_polygon(state_points[i][0], &state_points[i]) {
-                            s_ges -= shoelace_formel(&state_points[i]);
-                        } else {
-                            s_ges += shoelace_formel(&state_points[i]);
-                            check_cities(&state_points[i]);
-                        }
+            let mut is_hole = false;
+            for (j, el) in state_points.iter().enumerate() {
+                if i != j {
+                    is_hole = point_inside_polygon(state_points[i][0], e);
+                    
+                    if is_hole {
+                        println!("Hole gefunden in {}!", state);
+                        break;
+                    }
                 }
-
-                // Füge die Punkte zum Deutschland-Plot hinzu
-                germany_plot.push(current.clone());
             }
             
-
-            for loch in state_points {
-
+            if is_hole {
+                s_ges -= part_size;
+            } else {
+                s_ges += part_size;
+                check_cities(e)
             }
 
-            // ds_ges += dreieck_shoelace_formel(&connected_points);
+            // Füge die Punkte zum Deutschland-Plot hinzu
+            germany_plot.push(e.clone());
         }
 
         println!("Shoelace-Formel von {}: {}", state, s_ges.abs());
-
-
     }
 
         draw_polygon("Deutschland.png".to_owned(), germany_plot)?;
@@ -266,7 +265,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_ccw() {
+    fn point_inside_polygon_1() {
     }
 }
 
+struct Polygon {
+    points: Vec<Vec<(f32, f32)>>
+}
+
+struct State {
+    name: String,
+    polygon: Polygon,
+    external: Vec<Polygon>,
+    internal: Vec<Polygon>
+}
