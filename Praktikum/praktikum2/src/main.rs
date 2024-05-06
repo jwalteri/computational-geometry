@@ -43,8 +43,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for state in &state_vector {
         println!("Bundesland: {}", state.name);
         println!("Fläche: {}", state.get_area());
-        state.draw()?;
+        //state.draw()?;
     }
+
+    let cities = get_cities();
 
     for city in get_cities() {
         for state in &state_vector {
@@ -393,18 +395,16 @@ impl State {
 
     // Funktion: Punkt in Polygon
     fn is_point_inside(&self, point: (f32, f32)) -> bool {
-        let mut inside = point_inside_polygon(point, &self.polygon.points);
+        let inside = point_inside_polygon(point, &self.polygon.points);
 
         for loch in &self.loch {
-            inside = point_inside_polygon(point, &loch.points);
-            if inside {
+            if point_inside_polygon(point, &loch.points) {
                 return false;
             }
         }
 
         for insel in &self.insel {
-            inside = point_inside_polygon(point, &insel.points);
-            if inside {
+            if point_inside_polygon(point, &insel.points) {
                 return true;
             }
         }
