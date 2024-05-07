@@ -39,7 +39,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for state in &state_vector {
         println!("Bundesland: {}", state.name);
         println!("Fläche: {}", state.get_area());
-        //state.draw()?;
+        state.draw()?;
     }
 
     for city in get_cities() {
@@ -56,8 +56,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             germany_plot.push(points.clone());
         }
     }
-    
     draw_polygon("Deutschland.png".to_owned(), germany_plot)?;
+    //draw_polygon("states/ccw/Deutschland.png".to_owned(), germany_plot)?;
 
     Ok(())
 }
@@ -187,16 +187,57 @@ fn draw_polygon(name: String, points: Vec<Vec<(f32, f32)>>) -> Result<(), Box<dy
 
     chart.configure_mesh().draw()?;
 
+    // test: draw Polygons "green if ccw", "red if cw", "else black": Zusammenhang zwischen ccw/cw und Insel/Loch? => leider nein, keine Lösung
+    /*for point in points {
+        let len  = point.len();
+        let color = ccw(point[0], point[(len/3) as usize], point[(len*2/3) as usize]); // 3 weit voneinander entfernte Punkte
 
+        if color > 0.0 {
+            chart.draw_series(LineSeries::new(
+                point.iter().cloned().cycle().take(point.len() + 1),
+                &GREEN,
+            ))?;
+        } else if color < 0.0 {
+            chart.draw_series(LineSeries::new(
+                point.iter().cloned().cycle().take(point.len() + 1),
+                &RED,
+            ))?;
+        } else {
+            chart.draw_series(LineSeries::new(
+                point.iter().cloned().cycle().take(point.len() + 1),
+                &BLACK,
+            ))?;
+        }
+    }*/
+    
     for point in points {
-        chart.draw_series(LineSeries::new(
+            chart.draw_series(LineSeries::new(
             point.iter().cloned().cycle().take(point.len() + 1),
             &RED,
         ))?;
     }
+    
 
     root.present()?;
     Ok(())
+}
+
+fn ccw(p1: (f32, f32), p2: (f32, f32), p3: (f32, f32)) -> f32 {
+    // Berechne die Vektoren von Punkt1 nach Punkt2 und von Punkt2 nach Punkt3
+    let vector1 = (p2.0 - p1.0, p2.1 - p1.1);
+    let vector2 = (p3.0 - p2.0, p3.1 - p2.1);
+
+    // Berechne das Kreuzprodukt
+    let cross_product = vector1.0 * vector2.1 - vector1.1 * vector2.0;
+
+    // Überprüfe das Vorzeichen des Kreuzprodukts
+    if cross_product > 0.0 {
+        1.0  // Gegen den Uhrzeigersinn
+    } else if cross_product < 0.0 {
+        -1.0  // Im Uhrzeigersinn
+    } else {
+        0.0  // Kollinear (liegen auf einer Linie)
+    }
 }
 
 // Lese die Datei Zeile für Zeile ein und konvertiere die relativen Koordinaten in absolute Koordinaten bzw. behalte die absoluten Koordinaten
@@ -340,6 +381,7 @@ impl State {
             points.push(loch.points.clone());
         }
         draw_polygon(format!("states/{}.png", self.name), points)?;
+        //draw_polygon(format!("states/ccw/{}.png", self.name), points)?;
         Ok(())
     }
 }
