@@ -95,28 +95,41 @@ fn get_cities() -> Vec<City> {
     cities
 }
 
+// Ray Casting
 fn point_inside_polygon(point: (f32, f32), polygon: &[(f32, f32)]) -> bool {
+    // Initialisiere eine Variable, um zu verfolgen, ob der Punkt innerhalb des Polygons liegt.
     let mut inside = false;
+    // Ermittle die Anzahl der Eckpunkte des Polygons.
     let n = polygon.len();
+    // Initialisiere den Index j auf den Index des letzten Punktes des Polygons.
     let mut j = n - 1;
 
+    // Iteriere über alle Eckpunkte des Polygons.
     for i in 0..n {
+        // Abrufen der Koordinaten des aktuellen Punktes.
         let (xi, yi) = polygon[i];
+        // Abrufen der Koordinaten des vorherigen Punktes.
         let (xj, yj) = polygon[j];
 
-        if (yi < point.1 && yj >= point.1 || yj < point.1 && yi >= point.1)
-            && (xi <= point.0 || xj <= point.0)
+        // Überprüfe, ob der Strahl vom Punkt aus die Kante des Polygons schneidet.
+        // Prüft, ob Y des aktuellen Punktes (oder des vorherigen Punktes) unterhalb des betrachteten Punktes liegt
+        // und ob die X-Koor der Kante links vom betrachteten Punkt liegt.
+        if (yi < point.1 && yj >= point.1 || yj < point.1 && yi >= point.1) 
+            && (xi <= point.0 || xj <= point.0) 
         {
+            // Überprüfe, ob der Strahl die Kante schneidet und der Schnittpunkt rechts vom betrachteten Punkt liegt.
             if xi + (point.1 - yi) / (yj - yi) * (xj - xi) < point.0 {
+                // Wenn die Bedingungen erfüllt sind, negiere den Wert von inside.
                 inside = !inside;
             }
         }
+        // Setze den Index j auf den Index des aktuellen Punktes.
         j = i;
     }
+    // Gib den Wert von inside zurück, der angibt, ob der Punkt innerhalb des Polygons liegt.
     inside
 }
 
-// Lese die "ending" Dateien im Verzeichnis "dir_entries" ein und übergebe die Dateinamen als Vektor
 fn get_files_with_ending(states: &mut Vec<String>, dir_entries: std::fs::ReadDir, ending: &String) -> Result<(), Box<dyn std::error::Error>> {
 
     for entry in dir_entries {
@@ -148,11 +161,13 @@ fn dreieck_shoelace_formel(points: &[(f32, f32)]) -> f32 {
 fn shoelace_formel(points: &[(f32, f32)]) -> f32 {
     let mut area = 0.0;
     let n = points.len();
+    
     for i in 0..n {
         let j = (i + 1) % n;
         area += points[i].0 * points[j].1;
         area -= points[j].0 * points[i].1;
     }
+    
     area.abs() / 2.0
 }
 
