@@ -3,6 +3,7 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::vec;
 use plotters::prelude::*;
+use plotters::style::full_palette::GREEN_700;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Lese die Dateien im Verzeichnis "states" ein
@@ -188,6 +189,7 @@ fn draw_polygon(name: String, points: Vec<Vec<(f32, f32)>>) -> Result<(), Box<dy
     chart.configure_mesh().draw()?;
 
     // test: draw Polygons "green if ccw", "red if cw", "else black": Zusammenhang zwischen ccw/cw und Insel/Loch? => leider nein, keine Lösung
+    
     /*for point in points {
         let len  = point.len();
         let color = ccw(point[0], point[(len/3) as usize], point[(len*2/3) as usize]); // 3 weit voneinander entfernte Punkte
@@ -195,7 +197,7 @@ fn draw_polygon(name: String, points: Vec<Vec<(f32, f32)>>) -> Result<(), Box<dy
         if color > 0.0 {
             chart.draw_series(LineSeries::new(
                 point.iter().cloned().cycle().take(point.len() + 1),
-                &GREEN,
+                &GREEN_700,
             ))?;
         } else if color < 0.0 {
             chart.draw_series(LineSeries::new(
@@ -209,7 +211,6 @@ fn draw_polygon(name: String, points: Vec<Vec<(f32, f32)>>) -> Result<(), Box<dy
             ))?;
         }
     }*/
-    
     for point in points {
             chart.draw_series(LineSeries::new(
             point.iter().cloned().cycle().take(point.len() + 1),
@@ -335,7 +336,21 @@ impl State {
         for loch in &self.loch {
             area -= shoelace_formel(&loch.points);
         }
+        self.test_shoelace();
         area
+    }
+
+    fn test_shoelace(&self) {
+        let mut area = 0.0;
+        area += dreieck_shoelace_formel(&self.polygon.points);
+        for insel in &self.insel {
+            area += dreieck_shoelace_formel(&insel.points);
+        }
+        for loch in &self.loch {
+            area -= dreieck_shoelace_formel(&loch.points);
+        }
+
+        println!("dreieck_shoelace_formel Fläche: {}", area)
     }
 
     // Funktion: Punkt in Polygon
