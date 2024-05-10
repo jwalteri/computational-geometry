@@ -4,12 +4,12 @@
 
 **Titel:** Bestimmung der Anzahl der sich schneidenden Strecken inklusive Zeitmessung.  
 **Gruppe:** Johannes Walter, Luca Biege  
-**Datum:** 05.04.2024  
+**Datum:** 07.05.2024  
 
 
 # Einleitung
 
-Im folgenden Praktikumsversuch geht es darum, einen Code zu entwickeln, welcher die Anzahl von Schnittstellen vieler Strecken berechnet und diese ausgibt. Die Strecken sind durch ein Punktpaar mit den Koordinaten [x1, y1, x2, x2] definiert und in einer *.dat* Datei gespeichert. Hierbei entpricht jede Zeile einer Strecke mit dem Startpunkt *P1* und dem Endpunkt *P2*. Die drei Dateien beinhalten 1000, 10.000 und 100.000 Strecken.  
+Im folgenden Praktikumsversuch geht es darum, einen Code zu entwickeln, welcher die Anzahl von Schnittstellen vieler Strecken berechnet und diese ausgibt. Die Strecken sind durch ein Punktpaar mit den Koordinaten [$x_1$, $y_1$, $x_2$, $x_2$] definiert und in einer *.dat* Datei gespeichert. Hierbei entpricht jede Zeile einer Strecke mit dem Startpunkt *P1* und dem Endpunkt *P2*. Die drei Dateien beinhalten 1000, 10.000 und 100.000 Strecken.  
 Dabei soll die Dauer für die Ausführung des Programms gemessen und verglichen werden.  
 Als Programmiersprache wird *Rust* verwendet.
 
@@ -26,15 +26,15 @@ Zwei Strecken haben einen gemeinsamen **Schnittpunkt**, wenn sie mindestens eine
 Die **Determinante** einer 2x2 Matrix gibt eine Aussage über die Abhängigkeit der Vektoren einer Matrix. In diesem Fall wird sie verwendet um zu prüfen, wie zwei (Richtungs-) Vektoren zueinander stehen. Ist das Ergebnis der Berechnung $ det(A) = 0 $, so bedeutet dies, dass die Vektoren in dieselbe Richtung zeigen.
 
 $$ det(A) = \begin{bmatrix}
-a & b \\
-c & d \\ 
+a & b \\\\
+c & d \\\\ 
 \end{bmatrix}
  = a \cdot d - c \cdot b
 $$
 
 Das **Kreuzprodukt** zweier Vektoren ist ein Normalenvektor, also ein Vektor, welcher senkrecht auf diesen beiden Vektoren steht. Die Länge des Vektors gibt eine Aussage über die durch die beiden Vektoren aufgespannte Fläche. Sind die Vektoren parallel zueinander, spannen sie keine Fläche auf, d.h. das Kreuzprodukt $ \vec{a} \times \vec{b} = 0 $. Das Kreuzprodukt zweier 2-dimensionaler Vektoren lässt sich folgendermaßen berechnen:
 
-$$ \vec{a} \times \vec{b} = \begin{bmatrix} a1 \\ a2 \\ \end{bmatrix} \times \begin{bmatrix} b1 \\ b2 \\ \end{bmatrix} = a1 \cdot b2 - a2 \cdot b1
+$$ \vec{a} \times \vec{b} = \begin{bmatrix} a1 \\\\ a2 \\\\ \end{bmatrix} \times \begin{bmatrix} b1 \\\\ b2 \\\\ \end{bmatrix} = a1 \cdot b2 - a2 \cdot b1
 $$
  
 
@@ -83,13 +83,12 @@ Andernfalls kann überprüft werden, ob im Falle von Kollinearität eine partiel
 
 # Test mit GeoGebra
 
-[]
+[FEHLT NOCH]
 
 
 # Auswertung
-Im vorliegenden Praktikum wurden drei Files mit Strecken ausgewertet.
+Im vorliegenden Praktikum wurden drei Files mit einer unterschiedlichen Anzahl an Strecken ausgewertet.
 
-## s_1000_1.dat
 
 | Datei | Anzahl Schnittpunkte | Berechnungsdauer |
 |----------|----------|----------|
@@ -97,3 +96,5 @@ Im vorliegenden Praktikum wurden drei Files mit Strecken ausgewertet.
 | s_10000_1.dat    | 733   | 1.294 ms   |
 | s_100000_1.dat   | 77.171   | 124.300 ms   |
 
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script type="text/x-mathjax-config"> MathJax.Hub.Config({ tex2jax: {inlineMath: [['$', '$']]}, messageStyle: "none" });</script>
