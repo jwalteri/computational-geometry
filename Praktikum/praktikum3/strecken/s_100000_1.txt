@@ -1,0 +1,3 @@
+Ungültige Zeilen: 
+Datei eingelesen (Dauer: 272 ms).
+77171 Schnittpunkte gefunden (Dauer: 124300 ms).
