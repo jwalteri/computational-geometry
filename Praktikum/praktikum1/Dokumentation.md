@@ -53,22 +53,21 @@ Im folgenden Abschnitt werden zwei gefundene Lösungsansätze für die weitere B
 
 ## Ansatz geometrisch über Dreisatz
 
-Ein elementarer Test, um herauszufinden, ob sich zwei Strecken schneiden, ist das Gleichsetzen der Parametergleichungen. Punkte entlang der Strecke werden dabei durch die Verwendung eines Parameters beschrieben. Beide Strecken werden durch eine Parametergleichung dargestellt.
+Ein elementarer Test, um herauszufinden, ob sich zwei Strecken schneiden, ist das Gleichsetzen der Parametergleichungen. Punkte entlang der Strecke werden dabei durch die Verwendung eines Parameters beschrieben. Beide Strecken werden durch eine Parametergleichung dargestellt.    
 Gegeben sind zwei Strecken:
 $$ \overline{P} := [p_1 p_2] \text{ und } \overline{Q} := [q_1 q_2] \text{ im } ℝ² $$
 
-
-![Beispiele für Streckenpaare mit einem Schnittpunkt.](bilder/Strecken_Schnitt.png) (Nach Prof. M. Fischer, HS München)
-
 Berechnen des Schnittpunkts durch Gleichsetzen:
 $$ p_1 + \lambda(p_2 - p_1) = q_1 + \mu(q_2 - q_1) $$
+
+![Beispiele für Streckenpaare mit einem Schnittpunkt.](bilder/Strecken_Schnitt.png) (Nach Prof. M. Fischer, HS München)
 
 Die Parameter $\lambda$ und $\mu$ repräsentieren Punkte entlang der Strecke. Sie nehmen immer Werte zwischen 0 und 1 an. So erhält man den Ausgangspunkt der Strecke für den Wert 0 und den Endpunkt der Strecke für den Wert 1.
 Löst man das obige Gleichungssystem und erhält für $\lambda$ oder $\mu$ einen Wert außerhalb des Bereichs von 0 bis 1, bedeutet das, dass ein Punkt außerhalb der Strecken liegt und somit kein Schnittpunkt ist.
 
 Dieser Ansatz lässt sich mit Stift und Papier leicht umsetzen. Für die Berechnung mit Code bietet sich jedoch eine Lösung mithilfe von Determinaten an, da dies in Code sehr viel lesbarer und anwendbarer umsetzen lässt.
 
-Quelle: Vorlesungsunterlagen, 02Grundlagen, Prof. M. Fischer, HS München
+*Quelle: Vorlesungsunterlagen, 02Grundlagen, Prof. M. Fischer, HS München*
 
 
 ## Ansatz über Determinante
@@ -81,20 +80,66 @@ Anschließend lässt sich über das Kreuzprodukt eines Richtungsverktors $\overr
 Andernfalls kann überprüft werden, ob im Falle von Kollinearität eine partielle oder sogar vollständige Übereinstimmung der Geraden vorliegt. Hierzu wird lediglich die Reihenfolge der Start- und Endpunkte betrachtet und auf mindestens eine Überschneidung überprüft.
 
 
-# Test mit GeoGebra
+# Validierung
 
-[FEHLT NOCH]
+Zur Validierung der Ergebnisse bietet sich das Prinzip von Unit-Tests an. Dabei lassen sich einfache Tests auf bestimmte Charakteristiken mit bekanntem Ergebnis, wie beim Prinzip des überwachten Lernens, erstellen und analysieren. So kann der Code auf sein Verhalten untersucht werden. Die Testfälle sind in der Abbildung im Kapitel Grundlagen bereits aufgegriffen. Weitere Edgecases lassen sich auf Basis dieser Fälle finden. Hierzu gehört beispielsweise der Schnitt im Endpunkt einer oder beider Strecken.    
+Auch unerwartete Daten müssen sichergestellt und korrekt interpretiert werden. Fehlerhafte Daten werden bereits beim Einlesen der *.dat* Datei herausgefiltert und als Fehler markiert. Diese sind glücklicherweise nicht vorgekommen.  
+Ein Sonderfall, welcher vorgekommen ist, ist eine Strecke der Länge Null. Hier lässt sich kein Richtungsvektor bilden, weshalb separat auf Punkt-auf-Strecke untersucht werden muss.
 
+Um einen Unittest in Rust zu erstellen, wird das Attribut `#[test]` der Funktion vorgestellt. Wenn die zu testende Funktion mittels `cargo test` aufgerufen wird, wird eine *test runner binary*, also eine ausführbare Datei für automatisiertes Testing, gestartet. Der Return-Wert des Programms kann mit dem `assert_eq!()` Makro mit dem erwarteten Wert, in diesem Fall die Anzahl der sich schneidenden Strecken, verglichen werden und liefert bei Übereinstimmung (="equal") ein *Passed* als Testresultat. Der folgende Code zeigt beispielhaft einen kleinen Unittest für zwei Strecken, welche denselben Endpunkt besitzen.
+```rust
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn gleicher_endpunkt() {
+        let points = &[
+            (0.0, 0.0, 2.0, 2.0), 
+            (1.0, 3.0, 2.0, 2.0)];
+        assert_eq!(calculate_intersections(points), 1);
+    }
+}
+```
+Ergebnis:
+```
+running 1 test
+test tests::gleicher_endpunkt ... ok
+
+successes:
+    tests::gleicher_endpunkt
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.01s
+```
+Durch mehrere Tests an Edgecases lässt sich das Ergebnis der Berechnungen der drei gegebenen Dateien plausibilisieren.
+
+<div style="page-break-after: always;"></div>
 
 # Auswertung
 Im vorliegenden Praktikum wurden drei Files mit einer unterschiedlichen Anzahl an Strecken ausgewertet.
 
+| Datei | Anzahl Strecken | Schnittpunkte | Berechnungsdauer |
+|-|-|-|-|
+| s_1000_1.dat     | 1000    |  11    |  18 ms     |
+| s_10000_1.dat    | 10.000  | 733    | 1.294 ms   |
+| s_100000_1.dat   | 100.000 | 77.171 | 124.300 ms |
 
-| Datei | Anzahl Schnittpunkte | Berechnungsdauer |
-|----------|----------|----------|
-| s_1000_1.dat     |  11  |  18 ms  |
-| s_10000_1.dat    | 733   | 1.294 ms   |
-| s_100000_1.dat   | 77.171   | 124.300 ms   |
+Die Laufzeit des Algorithmus liegt bei $O(n^2)$, da jede Strecke mit jeder anderen Strecke verglichen werden muss. Für die Laufzeiten der drei Dateien ergibt sich durch Teilen der Berechnungsdauer durch die quadrierte Anzahl an Strecken folgende Dauer:
+
+<style>
+    .headerless th {
+        display: none;
+    }
+</style>
+
+<div class="headerless">
+
+| | | | |
+|-|-|-|-|
+| **Anzahl Strecken** | 1000 | 10.000 | 100.000 |
+| **Dauer pro Vergleich (in ms)** | 1.8 e-5 | 1.3 e-5 | 1.2 e-5 |
+</div>
+
+Die Größenordnung stimmt bei allen drei Berechnungen überein und erscheint damit realistisch. Abweichungen kommen vor allem durch initiale Laufzeiten mit $O(1)$ zustande, welche bei längerer Laufzeit eine immer kleinere Rolle spielen.
+
 
 <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 <script type="text/x-mathjax-config"> MathJax.Hub.Config({ tex2jax: {inlineMath: [['$', '$']]}, messageStyle: "none" });</script>

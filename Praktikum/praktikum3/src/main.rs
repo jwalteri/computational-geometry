@@ -77,6 +77,7 @@ fn main() {
     println!("Intersection List: {:?}", intersection_list);
 }
 
+
 fn TreatLeftEndpoint(segment: Segment, sweep_line: &mut AvlTreeMap<Point, Segment>) {
     // Füge das Segment zur Sweep Line hinzu
     sweep_line.insert(segment.left_point, segment);
@@ -93,5 +94,5 @@ fn find_right_endpoint(left_endpoint: &Point, sweep_line: &AvlTreeMap<Point, Seg
     // Dies ist nur ein Platzhalter, der den nächsten rechten Endpunkt zurückgibt.
     sweep_line.iter().next().unwrap().0
 }
-}
+
 
