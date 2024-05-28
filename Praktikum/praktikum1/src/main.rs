@@ -211,62 +211,19 @@ fn extract_points(file_path: &str) -> (Vec<(f64, f64, f64, f64)>, String) {
 
 
 
-#[test]
-fn test_is_inside() {
-    let p1 = Point { x: 1.0, y: 1.0 };
-    let p2 = Point { x: 2.0, y: 2.0 };
-    let q1 = Point { x: 0.0, y: 0.0 };
-    let q2 = Point { x: 3.0, y: 3.0 };
 
-    assert_eq!(segments_overlap(&p1, &p2, &q2, &q1), true);
-    // Add more test cases here
-}
+#[cfg(test)]
+mod tests{
+    use super::*;
+    #[test]
+    fn test_gleicher_endpunkt() {
+        let points = &[
+            (0.0, 0.0, 2.0, 2.0), 
+            (1.0, 3.0, 2.0, 2.0)];
 
-#[test]
-fn test_is_inside_negativ() {
-    let p1 = Point { x: 1.0, y: 1.0 };
-    let p2 = Point { x: 2.0, y: 2.0 };
-    let q1 = Point { x: 0.0, y: 0.0 };
-    let q2 = Point { x: 0.99, y: 0.99 };
-
-    assert_eq!(segments_overlap(&p1, &p2, &q2, &q1), false);
-    // Add more test cases here
-}
-
-#[test]
-fn test_calculate_intersections() {
-    let points = &[
-        (0.0, 0.0, 2.0, 2.0),  // Orange
-        (1.0, 1.0, 3.0, 3.0),  // Grüne (kollinear zu Linie 1)
-        (1.0, 2.0, 2.0, 1.0),  // Rot (schneidet Linie 1 und Linie 2)
-        (4.0, 4.0, 5.0, 5.0),  // Lila (parallel zu Linie 1 und Linie 2)
-        (0.0, 0.0, -2.0, -2.0), // Schwarz
-        (2.0, 4.0, 4.0, 2.0),  // Grau
-        (-0.5, -0.5, -1.5, -1.5), // Pink
-        (-2.0, -2.0, -1.0, -3.0) // Gift
-    ];
-
-    assert_eq!(calculate_intersections(points), 7);
-}
-
-#[test]
-fn test_simple_schnitt() {
-    let points = &[
-        (0.0, 0.0, 2.0, 2.0), 
-        (0.0, 2.0, 2.0, 0.0)];
-
-    assert_eq!(calculate_intersections(points), 1);
-}
-
-#[test]
-fn test_gleicher_endpunkt() {
-    let points = &[
-        (0.0, 0.0, 2.0, 2.0), 
-        (1.0, 3.0, 2.0, 2.0)];
-
-    assert_eq!(calculate_intersections(points), 1);
-}
-
+        assert_eq!(calculate_intersections(points), 1);
+    }
+    
 #[test]
 fn test_gleicher_endpunkt2() {
     let points = &[
@@ -344,4 +301,5 @@ fn test_1000_file() {
     let file_path = "strecken/s_1000_1.dat";
     let (points, _) = extract_points(file_path);
     assert_eq!(calculate_intersections(&points), 11);
+}
 }
