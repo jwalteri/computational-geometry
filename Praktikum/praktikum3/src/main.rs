@@ -71,6 +71,17 @@ struct Event {
     segment: Option<LineSegment>,
 }
 
+impl Event {
+    // Funktion um Event zu String
+    fn to_string(&self) -> String {
+        match &self.event_type {
+            EventType::Start => format!("S"), //tart event at (x: {:.2}, y: {:.2})", self.point.x, self.point.y),
+            EventType::End => format!("E"), //nd event at (x: {:.2}, y: {:.2})", self.point.x, self.point.y),
+            EventType::Intersection(point) => format!("I") //ntersection event at (x: {:.2}, y: {:.2})", point.x, point.y),
+        }
+    }
+}
+
 impl Ord for Event {
     fn cmp(&self, other: &Self) -> Ordering {
         other.point.x.partial_cmp(&self.point.x).unwrap().then_with(|| {
@@ -110,6 +121,8 @@ impl Iterator for Point {
 impl Ord for LineSegment {
     fn cmp(&self, other: &Self) -> Ordering {
         // Compare the start points of the line segments
+        // Ausgabe der Vergleiche
+        //println!("COMPARING: Segment from (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2}) with segment from (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2})", self.start.x, self.start.y, self.end.x, self.end.y, other.start.x, other.start.y, other.end.x, other.end.y);
         self.start.x.partial_cmp(&other.start.x).unwrap().then_with(|| {
             self.start.y.partial_cmp(&other.start.y).unwrap()
         })
@@ -130,13 +143,14 @@ impl PartialOrd for LineSegment {
 
     impl Eq for LineSegment {}
 
+    // TODO: Wenn Start hinter Ende liegt, umdrehen!
 fn main() {
     let segments = vec![
+        LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 3.0 } },
         LineSegment { start: Point { x: 0.0, y: 0.0 }, end: Point { x: 4.0, y: 4.0 } },
         LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 4.0, y: 0.0 } },
-        LineSegment { start: Point { x: 0.62, y: 2.14 }, end: Point { x: 0.56, y: 1.06 } },
-        LineSegment { start: Point { x: 3.9, y: 3.32 }, end: Point { x: 3.16, y: 1.24 } },
-        LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 3.0 } },
+        LineSegment { start: Point { x: 0.3, y: 2.0 }, end: Point { x: 0.6, y: 1.0 } },
+        LineSegment { start: Point { x: 3.16, y: 1.24 }, end: Point { x: 3.9, y: 3.32 } },
     ];
 
     let mut events = BinaryHeap::new();
@@ -154,14 +168,36 @@ fn main() {
             segment: Some(*segment),
         });
         // Ausgabe, dass Start und End Events hinzugefügt wurden
-        println!("Start event at (x: {:.2}, y: {:.2})", segment.start.x, segment.start.y);
-        println!("End event at (x: {:.2}, y: {:.2})\n", segment.end.x, segment.end.y);
+        println!("EVENT: Start event at (x: {:.2}, y: {:.2})", segment.start.x, segment.start.y);
+        println!("EVENT: End event at (x: {:.2}, y: {:.2})\n", segment.end.x, segment.end.y);
+
+        // Ausgabe der events mit hilfe der tostring funktion in Schleife
+        println!("Events:");
+        for event in &events {
+            print!("{}", event.to_string());
+        }
+        println!("\n");
     }    
 
     let mut sweep_line = BTreeSet::new();
     let mut intersections = Vec::new();
 
+    // Ausgabe der events mit hilfe der tostring funktion in Schleife
+    println!("Events:");
+    for event in &events {
+        print!("{}", event.to_string());
+    }
+    println!("\n");
+
     while let Some(event) = events.pop() {
+
+        // Ausgabe der events mit hilfe der tostring funktion in Schleife
+        println!("Events:");
+        for event in &events {
+            print!("{}", event.to_string());
+        }
+        println!("\n");
+
         match event.event_type {
             EventType::Start => {
                 if let Some(segment) = event.segment {
@@ -170,12 +206,16 @@ fn main() {
 
                     // Prüfe auf Schnittpunkte mit benachbarten Segmenten
                     for neighbor in sweep_line.range(..segment).rev().take(1).chain(sweep_line.range(segment..).skip(1).take(1)) {
+                        // Ausgabe, was verglichen wird
+                        //println!("COMPARING: Segment from (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2}) with segment from (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2})", segment.start.x, segment.start.y, segment.end.x, segment.end.y, neighbor.start.x, neighbor.start.y, neighbor.end.x, neighbor.end.y);
                         if let Some(point) = segment.intersect(neighbor) {
                             events.push(Event {
                                 point,
                                 event_type: EventType::Intersection(point),
                                 segment: None,
                             });
+                            // Ausgabe, dass ein Schnittpunkt gefunden wurde
+                            println!("INTERSECTION: At (x: {:.2}, y: {:.2})\n", point.x, point.y);
                         }
                     }
                 }
@@ -191,6 +231,8 @@ fn main() {
                 if let Some(segment) = event.segment {
                     // Entferne das Segment aus der Sweep Line
                     sweep_line.remove(&segment);
+                    // Ausgabe der Entfernung
+                    println!("REMOVE: Segment from (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2}) removed from sweep line\n", segment.start.x, segment.start.y, segment.end.x, segment.end.y);
 
                     // Prüfe auf Schnittpunkte zwischen den benachbarten Segmenten, die jetzt direkt nebeneinander liegen
                     let prev = sweep_line.range(..segment).rev().take(1).next().cloned();
@@ -215,6 +257,7 @@ fn main() {
 
 
     // Zeilenweise Ausgabe der Schnittpunkte
+    println!("Intersections:");
     for point in intersections {
         println!("Intersection at (x: {:.2}, y: {:.2})\n", point.x, point.y);
     }
