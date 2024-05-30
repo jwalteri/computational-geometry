@@ -201,6 +201,9 @@ fn main() {
         LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 4.0, y: 0.0 } },
         LineSegment { start: Point { x: 0.3, y: 2.0 }, end: Point { x: 0.6, y: 1.0 } },
         LineSegment { start: Point { x: 3.16, y: 1.24 }, end: Point { x: 3.9, y: 3.32 } },
+        LineSegment { start: Point { x: 2.0, y: 1.5 }, end: Point { x: 4.0, y: 1.5 } },
+        LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 0.0, y: 0.0 } },
+        LineSegment { start: Point { x: -0.5, y: 4.0 }, end: Point { x: 0.5, y: 4.0 } },
     ];
 
     // let segments = vec![
@@ -356,12 +359,21 @@ mod tests {
         let EF = LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 4.0, y: 0.0 } };
         let GH = LineSegment { start: Point { x: 0.3, y: 2.0 }, end: Point { x: 0.6, y: 1.0 } };
         let IJ = LineSegment { start: Point { x: 3.16, y: 1.24 }, end: Point { x: 3.9, y: 3.32 } };
+        let KL = LineSegment { start: Point { x: 2.0, y: 1.5 }, end: Point { x: 4.0, y: 1.5 } };
+        let EC = LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 0.0, y: 0.0 } };
+        let MN: LineSegment = LineSegment { start: Point { x: -0.5, y: 4.0 }, end: Point { x: 0.5, y: 4.0 } };
     
         assert_eq!(AB.intersect(&CD), Some(Point { x: 2.0, y: 2.0 }));
         assert_eq!(AB.intersect(&EF), Some(Point { x: 2.0, y: 2.0 }));
         assert_eq!(CD.intersect(&EF), Some(Point { x: 2.0, y: 2.0 }));
         assert_eq!(AB.intersect(&GH), Some(Point { x: 0.4545454545454548, y: 1.4848484848484849 }));
         assert_eq!(AB.intersect(&IJ), Some(Point { x: 3.622836363636364, y: 2.5409454545454544 }));
+        assert_eq!(KL.intersect(&EF), Some(Point { x: 2.5, y: 1.5 }));
+        assert_eq!(KL.intersect(&IJ), Some(Point { x: 3.2525000000000004, y: 1.5 }));
+        assert_eq!(EC.intersect(&EF), Some(Point { x: 0.0, y: 4.0 }));
+        assert_eq!(EC.intersect(&CD), Some(Point { x: 0.0, y: 0.0 }));
+        assert_eq!(MN.intersect(&EF), Some(Point { x: 0.0, y: 4.0 }));
+        assert_eq!(MN.intersect(&EC), Some(Point { x: 0.0, y: 4.0 }));
 
         // Segmente in Liste einfügen
         let segments = vec![AB, CD, EF, GH, IJ];
