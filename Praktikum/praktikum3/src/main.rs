@@ -1,6 +1,7 @@
 use std::collections::{BTreeSet, BinaryHeap};
 use std::cmp::Ordering;
 use std::fmt;
+use std::os::windows::io::BorrowedHandle;
 
 // Repräsentiert einen Punkt im 2D-Raum
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -95,7 +96,7 @@ impl LineSegment {
 enum EventType {
     Start,
     End,
-    Intersection(Point),
+    Intersection(Point, LineSegment, LineSegment),
 }
 
 #[derive(Debug, Clone)]
@@ -111,7 +112,7 @@ impl Event {
         match &self.event_type {
             EventType::Start => format!("S"), //tart event at (x: {:.2}, y: {:.2})", self.point.x, self.point.y),
             EventType::End => format!("E"), //nd event at (x: {:.2}, y: {:.2})", self.point.x, self.point.y),
-            EventType::Intersection(point) => format!("I") //ntersection event at (x: {:.2}, y: {:.2})", point.x, point.y),
+            EventType::Intersection(point, segA, segB) => format!("I") //ntersection event at (x: {:.2}, y: {:.2})", point.x, point.y),
         }
     }
 }
@@ -286,7 +287,9 @@ fn main() {
     // }
     // //println!("----------------------------------");
 
-    let mut sweep_line = BTreeSet::new();
+    //let mut sweep_line = BTreeSet::new();
+    let mut sweep_line = Vec::new();
+
     let mut intersections = Vec::new();
 
     // Ausgabe der events mit hilfe der tostring funktion in Schleife
@@ -308,104 +311,64 @@ fn main() {
         match event.event_type {
             EventType::Start => {
                 if let Some(segment) = event.segment {
-                    //println!("==================================");
-                    // Ausgabe des aktiven Segments
-                    //println!("CURRENT: (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2})", segment.start.x, segment.start.y, segment.end.x, segment.end.y);
+                    // Hinzufügen zur SL
+                    //sweep_line.insert(segment);
+                    sweep_line.push(segment);
 
-                    // Füge das Segment zur Sweep Line hinzu
-                    sweep_line.insert(segment);
+                    // Finden von above und below
+                    let above = sweep_line.range((segment..)).skip(1).next();
+                    let below = sweep_line.range(..segment).next_back();
 
-                    // Ausgabe der aktuellen Sweep Line
-                    //println!("----------------------------------");
-                    //println!("Sweep Line:");
-                    //for segment in &sweep_line {
-                        //println!("(x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2})", segment.start.x, segment.start.y, segment.end.x, segment.end.y);
-                    //}
-                    //println!("----------------------------------");
-
-                    // Prüfe auf Schnittpunkte mit benachbarten Segmenten
-
-                    // Finde vorheriges und nächstes Segment in sweep_line
-                    let pre = sweep_line.range(..segment).rev().take(1).next();
-                    let post = sweep_line.range(segment..).skip(1).take(1).next();
-
-                    // pre und post in vec
-                    let mut vec = Vec::new();
-                    if let Some(pre) = pre {
-                        vec.push(pre);
-                    }
-                    if let Some(post) = post {
-                        vec.push(post);
-                    }
-
-                    // Prüfe auf Schnittpunkte
-                    // for neighbor in vec {
-                    //     if let Some(point) = segment.intersect(neighbor) {
-                    //         events.push(Event {
-                    //             point,
-                    //             event_type: EventType::Intersection(point),
-                    //             segment: None,
-                    //         });
-                    //     }
-                    // }
-
-                    for neighbor in sweep_line.range(..segment).rev().take(1).chain(sweep_line.range(segment..).skip(1).take(1)) {
-                        // Ausgabe, was verglichen wird
-                        println!("?");
-                    }
-
-
-                    for neighbor in sweep_line.clone() { //.range(..segment).rev().take(1).chain(sweep_line.range(segment..).skip(1).take(1)) {
-                        if neighbor.start == segment.start {
-                            continue;
-                        }
-                        println!("!");
-                        // Ausgabe, was verglichen wird
-                        ////println!("COMPARING: Segment from (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2}) with segment from (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2})", segment.start.x, segment.start.y, segment.end.x, segment.end.y, neighbor.start.x, neighbor.start.y, neighbor.end.x, neighbor.end.y);
-                        if let Some(point) = segment.intersect(&neighbor) {
+                    // Prüfe auf Schnittpunkte mit above und below
+                    if let Some(above) = above {
+                        if let Some(point) = segment.intersect(above) {
                             events.push(Event {
                                 point,
-                                event_type: EventType::Intersection(point),
+                                event_type: EventType::Intersection(point, segment, above.clone()),
                                 segment: None,
                             });
-                            // Ausgabe, dass ein Schnittpunkt gefunden wurde
-                            //println!("INTERSECTION: At (x: {:.2}, y: {:.2})\n", point.x, point.y);
                         }
                     }
-                    //println!("==================================");
+
+                    if let Some(below) = below {
+                        if let Some(point) = segment.intersect(below) {
+                            events.push(Event {
+                                point,
+                                event_type: EventType::Intersection(point, segment, below.clone()),
+                                segment: None,
+                            });
+                        }
+                    }
                 }
             }
-            // EventType Delete
-            /*EventType::Delete => {
-
-
-
-            }
-            */
             EventType::End => {
                 if let Some(segment) = event.segment {
                     // Entferne das Segment aus der Sweep Line
                     sweep_line.remove(&segment);
-                    // Ausgabe der Entfernung
-                    //println!("REMOVE: Segment from (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2}) removed from sweep line\n", segment.start.x, segment.start.y, segment.end.x, segment.end.y);
 
-                    // Prüfe auf Schnittpunkte zwischen den benachbarten Segmenten, die jetzt direkt nebeneinander liegen
-                    let prev = sweep_line.range(..segment).rev().take(1).next().cloned();
-                    let next = sweep_line.range(segment..).skip(1).take(1).next().cloned();
+                    // Finden von above und below
+                    let above = sweep_line.range(segment..).skip(1).next();
+                    let below = sweep_line.range(..segment).next_back();
 
-                    if let (Some(prev), Some(next)) = (prev, next) {
-                        if let Some(point) = prev.intersect(&next) {
+                    // Prüfe auf Schnittpunkte mit above und below, wenn above und below existieren
+                    if let (Some(above), Some(below)) = (above, below) {
+                        if let Some(point) = below.intersect(above) {
+                            // Wenn Event noch nicht in events ist, füge es hinzu
+                
                             events.push(Event {
                                 point,
-                                event_type: EventType::Intersection(point),
+                                event_type: EventType::Intersection(point, *below, *above),
                                 segment: None,
                             });
                         }
                     }
                 }
             }
-            EventType::Intersection(point) => {
+            EventType::Intersection(point, segA, segB) => {
                 intersections.push(point);
+
+                // Tausche Position von segA und segB in der Sweep Line
+
             }
         }
     }
