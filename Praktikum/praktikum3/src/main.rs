@@ -52,12 +52,50 @@ impl LineSegment {
         })
     }
 }
+/*
+impl Ord for LineSegment {
+    fn cmp(&self, other: &Self) -> Ordering {
+        //println!("BLIB");
+        if self.point.x == other.point.x && self.point.y == other.point.y {
+            return Ordering::Equal;
+        } else
+
+        if self.point.x > other.point.x {
+            return Ordering::Greater;
+        } else 
+        {
+            return Ordering::Less;
+        }
+    }
+}
+
+impl PartialOrd for LineSegment {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        if self.start.y == other.start.y && self.end.y == other.end.y {
+            ////println!("{} is equal to {}", self.point.x, other.point.x);
+            return Some(Ordering::Equal);
+        } else
+
+        if self.start.y > other.start.y {
+            ////println!("{} is greater than {}", self.point.x, other.point.x);
+            //return Some(Ordering::Greater);
+            return Some(Ordering::Less);
+        } else 
+        {
+            ////println!("{} is less than {}", self.point.x, other.point.x);
+            //return Some(Ordering::Less);
+            return Some(Ordering::Greater);
+        }    
+    }
+} */
 
 impl PartialEq for LineSegment {
     fn eq(&self, other: &Self) -> bool {
-        self.start == other.start && self.end == other.end
+        self.start.y == other.start.y && self.end.y == other.end.y
     }
 }
+
+impl Eq for LineSegment {}
 
 #[derive(Debug, Clone)]
 struct Event {
@@ -115,6 +153,25 @@ fn contains_event(heap: &BinaryHeap<Event>, event: &Event) -> bool {
     heap.iter().any(|e| e == event)
 }
 
+// Sort sweepline by y-coordinate
+fn sort_sweep_line(sweep_line: &mut Vec<LineSegment>) {
+    sweep_line.sort_by(|a, b| a.start.y.partial_cmp(&b.start.y).unwrap());
+}
+
+// Add to sweep line
+fn add_to_sweep_line(sweep_line: &mut Vec<LineSegment>, segment: LineSegment) {
+    sweep_line.push(segment);
+    sort_sweep_line(sweep_line);
+}
+
+// Remove from sweep line
+fn remove_from_sweep_line(sweep_line: &mut Vec<LineSegment>, segment: LineSegment) {
+    if let Some(index) = sweep_line.iter().position(|x| x == &segment) {
+        sweep_line.remove(index);
+        sort_sweep_line(sweep_line);
+    }
+}
+
 fn main() {
     let segments = vec![
         LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 3.0 } },
@@ -144,15 +201,15 @@ fn main() {
         });
     }
 
-    let mut sweep_line = Vec::new();
+    let mut sweep_line = Vec::new();//BinaryHeap::new();
 
     let mut intersections = Vec::new();
 
     while let Some(event) = events.pop() {
         match event.event_type.as_str() {
             "Start" => {
-                sweep_line.push(event.segment);
-
+                add_to_sweep_line(&mut sweep_line, event.segment);
+                
                 if sweep_line.len() > 1 {
                     let pred = sweep_line.get(sweep_line.len() - 2);
 
@@ -171,9 +228,7 @@ fn main() {
 
 
             "End" => {
-                if let Some(index) = sweep_line.iter().position(|x| x == &event.segment) {
-                    sweep_line.remove(index);
-                }
+                remove_from_sweep_line(&mut sweep_line, event.segment);
 
                 // Finden von above und below
                 let index = sweep_line.iter().position(|&x| x == event.segment);
