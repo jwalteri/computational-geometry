@@ -261,3 +261,55 @@ fn main() {
 }
 
 
+
+// Unit Test for intersect
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_line_segment_intersect() {
+        let AB = LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 3.0 } };
+        let CD = LineSegment { start: Point { x: 0.0, y: 0.0 }, end: Point { x: 4.0, y: 4.0 } };
+        let EF = LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 4.0, y: 0.0 } };
+        let GH = LineSegment { start: Point { x: 0.3, y: 2.0 }, end: Point { x: 0.6, y: 1.0 } };
+        let IJ = LineSegment { start: Point { x: 3.16, y: 1.24 }, end: Point { x: 3.9, y: 3.32 } };
+        let KL = LineSegment { start: Point { x: 2.0, y: 1.5 }, end: Point { x: 4.0, y: 1.5 } };
+        let EC = LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 0.0, y: 0.0 } };
+        let MN: LineSegment = LineSegment { start: Point { x: -0.5, y: 4.0 }, end: Point { x: 0.5, y: 4.0 } };
+    
+        assert_eq!(AB.intersect(&CD), Some(Point { x: 2.0, y: 2.0 }));
+        assert_eq!(AB.intersect(&EF), Some(Point { x: 2.0, y: 2.0 }));
+        assert_eq!(CD.intersect(&EF), Some(Point { x: 2.0, y: 2.0 }));
+        assert_eq!(AB.intersect(&GH), Some(Point { x: 0.4545454545454548, y: 1.4848484848484849 }));
+        assert_eq!(AB.intersect(&IJ), Some(Point { x: 3.622836363636364, y: 2.5409454545454544 }));
+        assert_eq!(KL.intersect(&EF), Some(Point { x: 2.5, y: 1.5 }));
+        assert_eq!(KL.intersect(&IJ), Some(Point { x: 3.2525000000000004, y: 1.5 }));
+        assert_eq!(EC.intersect(&EF), Some(Point { x: 0.0, y: 4.0 }));
+        assert_eq!(EC.intersect(&CD), Some(Point { x: 0.0, y: 0.0 }));
+        assert_eq!(MN.intersect(&EF), Some(Point { x: 0.0, y: 4.0 }));
+        assert_eq!(MN.intersect(&EC), Some(Point { x: 0.0, y: 4.0 }));
+
+        // Segmente in Liste einfügen
+        let segments = vec![AB, CD, EF, GH, IJ];
+
+        // Teste alle Punkte miteinander in segments
+        // for (i, segment) in segments.iter().enumerate() {
+        //     for (j, other) in segments.iter().enumerate() {
+        //         if i == j {
+        //             continue;
+        //         }
+
+        //         let result = segment.intersect(other);
+
+        //         // Ausgabe, ob Schnittpunkt oder None
+        //         match result {
+        //             Some(point) => {
+        //                 //println!("Intersection at (x: {:.2}, y: {:.2})\n", point.x, point.y);
+        //             }
+        //             None => todo!(),
+        //         }
+        //     }
+        // }
+     }
+}
