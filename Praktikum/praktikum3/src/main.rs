@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::{BTreeSet, BinaryHeap}};
+use std::{cmp::Ordering, collections::{BTreeSet, BinaryHeap}, fmt::write};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct Point {
@@ -117,17 +117,60 @@ struct Event {
 
 impl Ord for Event {
     fn cmp(&self, other: &Self) -> Ordering {
-        //println!("BLIB");
-        if self.point.x == other.point.x && self.point.y == other.point.y {
-            return Ordering::Equal; // TODO: SORTIERUNG PASST? ODER AUF SEGMENT/OTHER PRÜFEN
-        } else
-
-        if self.point.x > other.point.x {
-            return Ordering::Greater;
-        } else 
-        {
-            return Ordering::Less;
+        if self.event_type == other.event_type && self.event_type == "Intersection" {
+            // Sortiere nach der X-Korrdinate des Schnittpunkts
+            if self.point.x == other.point.x {
+                if self.point.y == other.point.y {
+                    // Vergleiche Segmente
+                    if self.segment == other.segment {
+                        if self.other.unwrap() == other.other.unwrap() {
+                            // Vergleiche self.other
+                            if self.other.unwrap() == other.other.unwrap() {
+                                Ordering::Equal
+                            } else if self.other.unwrap() > other.other.unwrap() {
+                                Ordering::Greater
+                            } else {
+                                Ordering::Less
+                            }
+                        } else if self.other.unwrap() > other.other.unwrap() {
+                            Ordering::Greater
+                        } else {
+                            Ordering::Less
+                        }
+                    } else if self.segment > other.segment {
+                        Ordering::Greater
+                    } else {
+                        Ordering::Less
+                    }
+                } else if self.point.y > other.point.y {
+                    Ordering::Greater
+                } else {
+                    Ordering::Less
+                }
+            } else if self.point.x > other.point.x {
+                Ordering::Greater
+            } else {
+                Ordering::Less
+            }
+        } else {
+             // Sortiere nach der X-Korrdinate des Startpunkts
+            // Falls x-Koordinate gleich, dann nach der Y-Koordinate
+            if self.point.x == other.point.x {
+                if self.point.y == other.point.y {
+                    // Eventtyp start > intersection > end
+                    Ordering::Equal
+                } else if self.point.y > other.point.y {
+                    Ordering::Greater
+                } else {
+                    Ordering::Less
+                }
+            } else if self.point.x > other.point.x {
+                Ordering::Greater
+            } else {
+                Ordering::Less
+            }
         }
+
     }
 }
 
@@ -155,12 +198,33 @@ impl PartialOrd for Event {
 
 impl PartialEq for Event {
     fn eq(&self, other: &Self) -> bool {
-        self.point == other.point
+        // Vergleich auf Schnittpunkt
+        if self.event_type == "Intersection" && other.event_type == "Intersection" {
+            if self.point.x == other.point.x && self.point.y == other.point.y {
+                // Vergleich auf Segment
+                if self.segment == other.segment {
+                    if self.other.unwrap() == other.other.unwrap() {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 }
 
 fn contains_event(heap: &BinaryHeap<Event>, event: &Event) -> bool {
-    heap.iter().any(|e| e == event)
+    //heap.iter().any(|e| e == event)
+
+    // Prüfung, ob event in heap vorhanden ist
+    for e in heap.iter() {
+        if e == event {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 // Sort sweepline by y-coordinate
@@ -182,16 +246,48 @@ fn remove_from_sweep_line(sweep_line: &mut Vec<LineSegment>, segment: LineSegmen
     }
 }
 
+impl std::fmt::Display for LineSegment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "LineSegment {{ start: {:?}, end: {:?} }}", self.start, self.end)
+    }
+}
+
+impl std::fmt::Display for Event {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} at {{ x: {:?}, y: {:?} }}", self.event_type, self.point.x, self.point.y)
+    }
+}
+
+// fn display_tree_with_space(set: &BTreeSet<LineSegment>, indent: String, last: bool) {
+//     print!("{}[2J", 27 as char);
+//     display_tree(set, indent, last)
+// }
+
+// fn display_tree(set: &BTreeSet<LineSegment>, indent: String, last: bool) {
+//     let mut iter = set.iter();
+//     while let Some(value) = iter.next() {
+//         let connector = if last { "I___ " } else { "I---" };
+//         println!("{}{}{}", indent, connector, value);
+//         let new_indent = if last { "   " } else { "I   " };
+
+//         let sub_set = iter.collect::<BTreeSet<_>>();
+//         let sub_iter = sub_set.iter();
+//         let len = sub_set.len();
+//         for (i, item) in sub_iter.enumerate() {
+//             let is_last = i == len - 1;
+//             let sub_set = set.range(item.clone()..).map(|x| x.clone()).collect::<BTreeSet<_>>();
+//             display_tree(&sub_set, format!("{}{}", indent, new_indent), is_last);
+//         }
+//     }
+// }
+
 fn main() {
     let segments = vec![
         LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 3.0 } },
         LineSegment { start: Point { x: 0.0, y: 0.0 }, end: Point { x: 4.0, y: 4.0 } },
-        LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 4.0, y: 0.0 } },
-        LineSegment { start: Point { x: 0.3, y: 2.0 }, end: Point { x: 0.6, y: 1.0 } },
+        LineSegment { start: Point { x: 0.3, y: 2.0 }, end: Point { x: 0.6, y: 0.5 } },
         LineSegment { start: Point { x: 3.16, y: 1.24 }, end: Point { x: 3.9, y: 3.32 } },
         LineSegment { start: Point { x: 2.0, y: 1.5 }, end: Point { x: 4.0, y: 1.5 } },
-        LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 0.0, y: 0.0 } },
-        LineSegment { start: Point { x: -0.5, y: 4.0 }, end: Point { x: 0.5, y: 4.0 } },
     ];
 
     let mut events = BinaryHeap::new();
@@ -212,18 +308,31 @@ fn main() {
     }
 
     // Alle Events ausgeben
-    for event in events.iter() {
-        println!("Event at ({}, {}) of type {}", event.point.x, event.point.y, event.event_type);
-    }
+    // while let Some(element) = events.pop() {
+    //     println!("{}", element);
+    // }
 
     let mut sweep_line = BTreeSet::new();
+
+    // println!("BTreeSet Baumdarstellung:");
+    // display_tree(&events, String::new(), true);
 
     let mut intersections = Vec::new();
 
     while let Some(event) = events.pop() {
         match event.event_type.as_str() {
             "Start" => {
-                sweep_line.insert(event.segment);
+                let debug1 = sweep_line.insert(event.segment);
+                if !debug1 {
+                    println!("Segment already in sweep line");
+                }
+
+                //display_tree_with_space(&sweep_line, "   ".to_owned(), false);
+                // Ausgabe sweep_line
+                for segment in &sweep_line {
+                    println!("{}", segment);
+                }
+                println!("\n\n\n");
                 
                 // Above und below finden
                 let above = sweep_line.range(..event.segment).next_back();
@@ -256,12 +365,15 @@ fn main() {
 
 
             "End" => {
-                sweep_line.remove(&event.segment);
-
                 // Above und below finden
-                let above = sweep_line.range(..event.segment).next_back();
-                let below = sweep_line.range(event.segment..).skip(1).next();
+                let copy = sweep_line.clone();
+                let above = copy.range(..event.segment).next_back();
+                let below = copy.range(event.segment..).skip(1).next();
                 
+                // Remove
+                sweep_line.remove(&event.segment);
+                //display_tree_with_space(&sweep_line, "   ".to_owned(), false);
+
                 // Schnittpunkt zwischen above und below
                 if let (Some(above), Some(below)) = (above, below) {
                     if let Some(point) = above.intersect(below) {
@@ -291,24 +403,32 @@ fn main() {
                 sweep_line.remove(&segE1);
                 sweep_line.remove(&segE2);
                 
-                let new_segE1 = LineSegment { start: event.point, end: segE1.end };
-                let new_segE2 = LineSegment { start: event.point, end: segE2.end };
+                //let new_segE1 = LineSegment { start: event.point, end: segE1.end };
+                //let new_segE2 = LineSegment { start: event.point, end: segE2.end };
 
-                sweep_line.insert(new_segE1);
-                sweep_line.insert(new_segE2);
+                //sweep_line.insert(new_segE1);
+                //sweep_line.insert(new_segE2);
 
+                sweep_line.insert(segE2);
+                sweep_line.insert(segE1);
+                // Unten auch anpassen!!!
+
+                for segment in &sweep_line {
+                    println!("{}", segment);
+                }
+                println!("\n\n\n");
                 
                 // Above und below finden
-                let above = sweep_line.range(..new_segE2).next_back();
-                let below = sweep_line.range(new_segE1..).skip(1).next();
+                let above = sweep_line.range(..segE1).next_back();
+                let below = sweep_line.range(segE2..).skip(1).next();
 
                 // Schnittpunkt zwischen new_segE2 und above
                 if let Some(above) = above {
-                    if let Some(point) = new_segE2.intersect(above) {
+                    if let Some(point) = segE2.intersect(above) {
                         let new_event = Event {
                             point,
                             event_type: "Intersection".to_owned(),
-                            segment: new_segE2,
+                            segment: segE2,
                             other: Some(*above),
                         };
 
@@ -320,11 +440,11 @@ fn main() {
 
                 // Schnittpunkt zwischen new_segE1 und below
                 if let Some(below) = below {
-                    if let Some(point) = new_segE1.intersect(below) {
+                    if let Some(point) = segE1.intersect(below) {
                         let new_event = Event {
                             point,
                             event_type: "Intersection".to_owned(),
-                            segment: new_segE1,
+                            segment: segE1,
                             other: Some(*below),
                         };
 
