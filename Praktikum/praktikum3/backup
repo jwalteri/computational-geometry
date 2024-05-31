@@ -229,7 +229,7 @@ impl Eq for LineSegment {}
 
     // TODO: Wenn Start hinter Ende liegt, umdrehen!
 fn main() {
-    let mut segments = vec![
+    let segments = vec![
         LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 3.0 } },
         LineSegment { start: Point { x: 0.0, y: 0.0 }, end: Point { x: 4.0, y: 4.0 } },
         LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 4.0, y: 0.0 } },
@@ -257,16 +257,16 @@ fn main() {
     let mut events = BinaryHeap::new();
 
     // Ereignisse erzeugen
-    for segment in &segments {
+    for segment in segments {
         events.push(Event {
             point: segment.start,
             event_type: EventType::Start,
-            segment: Some(*segment),
+            segment: Some(segment),
         });
         events.push(Event {
             point: segment.end,
             event_type: EventType::End,
-            segment: Some(*segment),
+            segment: Some(segment),
         });
         // Ausgabe, dass Start und End Events hinzugefügt wurden
         ////println!("EVENT: Start event at (x: {:.2}, y: {:.2})", segment.start.x, segment.start.y);
@@ -316,29 +316,19 @@ fn main() {
                     sweep_line.push(segment);
 
                     // Finden von above und below
-                    if current_index > 0 {
-                        let previous_element = &vec[current_index - 1];
-                        println!("Element vor dem aktuellen Element: {:?}", previous_element);
-                    }
+                    let len = sweep_line.len();
+                    println!("Length: {}", len);
+                    if sweep_line.len() > 1 {
+                        let pred = sweep_line.get(sweep_line.len() - 2);
 
-                    // Prüfe auf Schnittpunkte mit above und below
-                    if let Some(above) = above {
-                        if let Some(point) = segment.intersect(above) {
-                            events.push(Event {
-                                point,
-                                event_type: EventType::Intersection(point, segment, above.clone()),
-                                segment: None,
-                            });
-                        }
-                    }
-
-                    if let Some(below) = below {
-                        if let Some(point) = segment.intersect(below) {
-                            events.push(Event {
-                                point,
-                                event_type: EventType::Intersection(point, segment, below.clone()),
-                                segment: None,
-                            });
+                        if let Some(pred) = pred {
+                            if let Some(point) = segment.intersect(pred) {
+                                events.push(Event {
+                                    point,
+                                    event_type: EventType::Intersection(point, segment, pred.clone()),
+                                    segment: None,
+                                });
+                            }
                         }
                     }
                 }
@@ -346,12 +336,15 @@ fn main() {
             EventType::End => {
                 if let Some(segment) = event.segment {
                     // Entferne das Segment aus der Sweep Line
-                    sweep_line.remove(&segment);
+                    if let Some(index) = sweep_line.iter().position(|&x| x == segment) {
+                        sweep_line.remove(index);
+                    }
 
                     // Finden von above und below
-                    let above = sweep_line.range(segment..).skip(1).next();
-                    let below = sweep_line.range(..segment).next_back();
-
+                    let index = sweep_line.iter().position(|&x| x == segment);
+                    let above = index.and_then(|i| sweep_line.get(i + 1));
+                    let below = index.and_then(|i| sweep_line.get(i - 1));
+                    
                     // Prüfe auf Schnittpunkte mit above und below, wenn above und below existieren
                     if let (Some(above), Some(below)) = (above, below) {
                         if let Some(point) = below.intersect(above) {
@@ -366,11 +359,40 @@ fn main() {
                     }
                 }
             }
-            EventType::Intersection(point, segA, segB) => {
+            EventType::Intersection(point, segE1, segE2) => {
                 intersections.push(point);
 
                 // Tausche Position von segA und segB in der Sweep Line
+                let indexA = sweep_line.iter().position(|&x| x == segE1);
+                let indexB = sweep_line.iter().position(|&x| x == segE2);
 
+                if let (Some(indexA), Some(indexB)) = (indexA, indexB) {
+                    sweep_line.swap(indexA, indexB);
+
+                    if (sweep_line.len() - 1) == indexA {
+                        let segA = sweep_line.get(indexA + 1);
+                        if let Some(segA) = segA {
+                            if let Some(point) = segA.intersect(&segE1) {
+                                events.push(Event {
+                                    point,
+                                    event_type: EventType::Intersection(point, *segA, segE1),
+                                    segment: None,
+                                });
+                            }
+                        }
+                    }
+                    let segB = sweep_line.get(indexA - 1);
+
+                    if let Some(segB) = segB {
+                        if let Some(point) = segB.intersect(&segE2) {
+                            events.push(Event {
+                                point,
+                                event_type: EventType::Intersection(point, *segB, segE2),
+                                segment: None,
+                            });
+                        }
+                    }
+                }
             }
         }
     }
