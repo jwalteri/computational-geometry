@@ -1,4 +1,5 @@
-use std::{cmp::Ordering, collections::{BTreeSet, BinaryHeap}, fmt::write};
+use std::{cmp::Ordering, collections::{BTreeSet, BinaryHeap, HashSet}, fmt::write, hash::Hasher};
+use std::hash::{Hash};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct Point {
@@ -334,6 +335,9 @@ fn main() {
                 }
                 println!("\n\n\n");
                 
+
+                // TODO: IST DIE SWEEPLINE RICHTIG SORTIERT?
+
                 // Above und below finden
                 let above = sweep_line.range(..event.segment).next_back();
                 let below = sweep_line.range(event.segment..).skip(1).next();
@@ -387,40 +391,33 @@ fn main() {
 
                         if !contains_event(&events, &new_event) && new_event != event {
                             events.push(new_event);
+                        } else {
+                            println!("Event already in events");
                         }
                     }
                 }
-
-
-
             }
             "Intersection" => {
                 intersections.push(event.point);
 
-                let segE1 = event.segment;
-                let segE2 = event.other.unwrap();
+                let mut segE1 = event.segment;
+                let mut segE2 = event.other.unwrap();
 
                 sweep_line.remove(&segE1);
                 sweep_line.remove(&segE2);
-                
-                //let new_segE1 = LineSegment { start: event.point, end: segE1.end };
-                //let new_segE2 = LineSegment { start: event.point, end: segE2.end };
 
+                let new_segE1 = LineSegment { start: segE1.end, end: segE1.start };
+                let new_segE2 = LineSegment { start: segE2.end, end: segE2.start };
+                segE1 = new_segE1;
+                segE2 = new_segE2;
                 //sweep_line.insert(new_segE1);
                 //sweep_line.insert(new_segE2);
 
-                sweep_line.insert(segE2);
                 sweep_line.insert(segE1);
-                // Unten auch anpassen!!!
 
-                for segment in &sweep_line {
-                    println!("{}", segment);
-                }
-                println!("\n\n\n");
                 
                 // Above und below finden
                 let above = sweep_line.range(..segE1).next_back();
-                let below = sweep_line.range(segE2..).skip(1).next();
 
                 // Schnittpunkt zwischen new_segE2 und above
                 if let Some(above) = above {
@@ -434,10 +431,22 @@ fn main() {
 
                         if !contains_event(&events, &new_event) && new_event != event {
                             events.push(new_event);
+                        } else {
+                            println!("Event already in events");
                         }
                     }
                 }
 
+                sweep_line.insert(segE2);
+
+                // Above und below finden
+                let below = sweep_line.range(segE2..).skip(1).next();
+
+                for segment in &sweep_line {
+                    println!("{}", segment);
+                }
+                println!("\n\n\n");
+                
                 // Schnittpunkt zwischen new_segE1 und below
                 if let Some(below) = below {
                     if let Some(point) = segE1.intersect(below) {
@@ -450,10 +459,12 @@ fn main() {
 
                         if !contains_event(&events, &new_event) && new_event != event {
                             events.push(new_event);
+                        } else {
+                            println!("Event already in events");
                         }
                     }
                 }
-
+                
             }
             _ => {}
         }
