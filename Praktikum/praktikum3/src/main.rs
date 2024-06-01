@@ -7,11 +7,27 @@ struct Point {
     y: f64,
 }
 
+impl Eq for Point {}
+
+impl Hash for Point {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Falls der Wert NaN ist, hashen wir ihn als 0, um Konsistenz zu gewährleisten
+        let hash_value = if self.x.is_nan() {
+            0
+        } else {
+            // Wandle die f64 in eine u64-Repräsentation um und hashe diese Bits
+            self.x.to_bits() ^ self.y.to_bits()
+        };
+        hash_value.hash(state);
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 struct LineSegment {
     start: Point,
     end: Point,
 }
+
 
 impl LineSegment {
     fn contains(&self, point: &Point) -> bool {
@@ -472,13 +488,33 @@ fn main() {
     }
 
     println!("Number of intersections: {}", intersections.len());
-    for intersection in intersections {
+    let rounded_points: Vec<Point> = intersections.into_iter()
+    .map(|p| Point {
+        x: round_to_two_decimals(p.x),
+        y: round_to_two_decimals(p.y),
+    })
+    .collect();    
+
+    let mut unique_points: HashSet<Point> = HashSet::new();
+    let mut result = Vec::new();
+
+    for point in rounded_points {
+        if unique_points.insert(point) {
+            result.push(point);
+        }
+    }
+
+    for intersection in result {
         println!("Intersection at ({}, {})", intersection.x, intersection.y);
     }
 
+
+
 }
 
-
+fn round_to_two_decimals(value: f64) -> f64 {
+    (value * 100.0).round() / 100.0
+}
 
 // Unit Test for intersect
 #[cfg(test)]
