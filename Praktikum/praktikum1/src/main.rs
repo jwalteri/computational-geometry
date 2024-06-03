@@ -36,8 +36,8 @@ const PRECISION: f64 = 0.0001;
 fn main() {
 
     let start_time = Instant::now();
-    let file_path = "strecken/s_1000_1.dat";
-    //let file_path = "strecken/s_10000_1.dat";
+    //let file_path = "strecken/s_1000_1.dat";
+    let file_path = "strecken/s_10000_1.dat";
     //let file_path = "strecken/s_100000_1.dat";
 
     // Logging mithilfe von info_message
@@ -141,7 +141,8 @@ pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
                 - PRECISION <= s && s <= 1.0 + PRECISION {
                     // Inkrementiere die Anzahl der Schnittpunkte
                     intersections = intersections + 1;
-                    //println!("I {}, J {}", i, j);
+                    //println!("Schnittpunkt: I {}, J {}", i, j);
+                    println!("Schnittpunkt: {} {}", intersection_s.x, intersection_s.y);
                 }
             }
 
