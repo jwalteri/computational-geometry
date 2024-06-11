@@ -1,52 +1,41 @@
-use std::collections::{BTreeSet, BinaryHeap};
-use std::cmp::Ordering;
-use std::fmt;
+use std::{cmp::Ordering, collections::{BTreeMap, BTreeSet, BinaryHeap, HashSet}};
 
-// Repräsentiert einen Punkt im 2D-Raum
-#[derive(Debug, Clone, Copy, PartialEq)]
+/////////////
+/// POINT ///
+/////////////
+
+#[derive(Debug, Copy, Clone)]
 struct Point {
     x: f64,
     y: f64,
 }
 
-// Repräsentiert ein Liniensegment durch zwei Punkte
+impl PartialEq for Point {
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y
+    }
+}
+
+impl Eq for Point {}
+
+// Hash for Point
+impl std::hash::Hash for Point {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.x.to_bits().hash(state);
+        self.y.to_bits().hash(state);
+    }
+}
+
+/////////////////
+// LINESEGMENT //
+/////////////////
+
 #[derive(Debug, Clone, Copy)]
 struct LineSegment {
     start: Point,
     end: Point,
+    id: usize,
 }
-
-// Funktion zum Einlesen von LineSegments aus Datei im Format "0 0 0.1 0.1"
-fn read_segments_from_file(filename: &str) -> Vec<LineSegment> {
-    let mut segments = Vec::new();
-    let file = std::fs::read_to_string(filename).expect("Could not read file");
-    for line in file.lines() {
-        let mut parts = line.split_whitespace();
-        let mut x1: f64 = parts.next().unwrap().parse().unwrap();
-        let y1: f64 = parts.next().unwrap().parse().unwrap();
-        let mut x2: f64 = parts.next().unwrap().parse().unwrap();
-        let y2: f64 = parts.next().unwrap().parse().unwrap();
-
-        // Erstellung der Punkte
-        let start = Point { x: x1, y: y1 };
-        let end = Point { x: x2, y: y2 };
-
-        if start.x >= end.x {
-            segments.push(LineSegment {
-                start: Point { x: x1, y: y1 },
-                end: Point { x: x2, y: y2 },
-            });
-        } else {
-            segments.push(LineSegment {
-                start: Point { x: x2, y: y2 },
-                end: Point { x: x1, y: y1 },
-            });
-        }
-
-    }
-    segments
-}
-
 
 
 impl LineSegment {
@@ -67,9 +56,13 @@ impl LineSegment {
         true
     }
 
+    fn round_to_4_decimals(num: f64) -> f64 {
+        (num * 10000.0).round() / 10000.0
+    }
+
     fn intersect(&self, other: &LineSegment) -> Option<Point> {
-        let LineSegment { start: p1, end: p2 } = self;
-        let LineSegment { start: p3, end: p4 } = other;
+        let LineSegment { start: p1, end: p2 , id: id1} = self;
+        let LineSegment { start: p3, end: p4 , id: id2} = other;
 
         let d = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y);
         if d.abs() < std::f64::EPSILON {
@@ -84,132 +77,80 @@ impl LineSegment {
         }
 
         Some(Point {
-            x: p1.x + u * (p2.x - p1.x),
-            y: p1.y + u * (p2.y - p1.y),
+            x: Self::round_to_4_decimals(p1.x + u * (p2.x - p1.x)),
+            y: Self::round_to_4_decimals(p1.y + u * (p2.y - p1.y)),
         })
-    }
-}
-
-// Repräsentiert ein Ereignis
-#[derive(Debug, Clone)]
-enum EventType {
-    Start,
-    End,
-    Intersection(Point),
-}
-
-#[derive(Debug, Clone)]
-struct Event {
-    point: Point,
-    event_type: EventType,
-    segment: Option<LineSegment>,
-}
-
-impl Event {
-    // Funktion um Event zu String
-    fn to_string(&self) -> String {
-        match &self.event_type {
-            EventType::Start => format!("S"), //tart event at (x: {:.2}, y: {:.2})", self.point.x, self.point.y),
-            EventType::End => format!("E"), //nd event at (x: {:.2}, y: {:.2})", self.point.x, self.point.y),
-            EventType::Intersection(point) => format!("I") //ntersection event at (x: {:.2}, y: {:.2})", point.x, point.y),
-        }
-    }
-}
-
-impl Ord for Event {
-    fn cmp(&self, other: &Self) -> Ordering {
-        //println!("BLIB");
-        if self.point.x == other.point.x && self.point.y == other.point.y {
-            return Ordering::Equal;
-        } else
-
-        if self.point.x > other.point.x {
-            return Ordering::Greater;
-        } else 
-        {
-            return Ordering::Less;
-        }
-
-
-
-        //self.point.x.partial_cmp(&other.point.x).unwrap().then_with(|| {
-        //    self.point.y.partial_cmp(&other.point.y).unwrap()
-       //})        
-       /*
-        .then_with(|| {
-            match (&self.event_type, &other.event_type) {
-                (EventType::Intersection(_), EventType::Intersection(_)) => Ordering::Equal,
-                (EventType::Intersection(_), _) => Ordering::Greater,
-                (_, EventType::Intersection(_)) => Ordering::Less,
-                (_, _) => Ordering::Equal,
-            }
-        })
-         */
-    }
-}
-
-impl fmt::Display for Point {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Point(x: {:.2}, y: {:.2})", self.x, self.y)
-    }
-}
-
-impl PartialOrd for Event {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        if self.point.x == other.point.x && self.point.y == other.point.y {
-            ////println!("{} is equal to {}", self.point.x, other.point.x);
-            return Some(Ordering::Equal);
-        } else
-
-        if self.point.x > other.point.x {
-            ////println!("{} is greater than {}", self.point.x, other.point.x);
-            //return Some(Ordering::Greater);
-            return Some(Ordering::Less);
-        } else 
-        {
-            ////println!("{} is less than {}", self.point.x, other.point.x);
-            //return Some(Ordering::Less);
-            return Some(Ordering::Greater);
-        }    
-    }
-}
-
-impl PartialEq for Event {
-    fn eq(&self, other: &Self) -> bool {
-        self.point == other.point
-    }
-}
-
-impl Eq for Event {}
-
-impl Iterator for Point {
-    type Item = f64;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        // Implement the logic to iterate over the coordinates of the point
-        unimplemented!()
     }
 }
 
 impl Ord for LineSegment {
     fn cmp(&self, other: &Self) -> Ordering {
-        // Compare the start points of the line segments
-        // Ausgabe der Vergleiche
-        ////println!("COMPARING: Segment from (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2}) with segment from (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2})", self.start.x, self.start.y, self.end.x, self.end.y, other.start.x, other.start.y, other.end.x, other.end.y);
-        ////println!("BLUB");
-        if self.start.x == other.start.x && self.start.y == other.start.y {
-            return Ordering::Equal;
-        } else
 
-        if self.start.x > other.start.x {
-            //return Some(Ordering::Greater);
-            return Ordering::Less;
-        } else 
-        {
-            //return Some(Ordering::Less);
-            return Ordering::Greater;
-        } 
-    }
+        // Sortiere Segmente nach dem Y-Wert des Startpunktes
+        if self.start.y < other.start.y {
+            Ordering::Greater
+        } else if self.start.y > other.start.y {
+            Ordering::Less
+        } else {
+            // Sortiere Segmente nach dem X-Wert des Startpunktes
+            if self.start.x < other.start.x {
+                Ordering::Greater
+            } else if self.start.x > other.start.x {
+                Ordering::Less
+            } else {
+                // Sortiere Segmente nach dem Y-Wert des Endpunktes
+                if self.end.y < other.end.y {
+                    Ordering::Greater
+                } else if self.end.y > other.end.y {
+                    Ordering::Less
+                } else {
+                    // Sortiere Segmente nach dem X-Wert des Endpunktes
+                    if self.end.x < other.end.x {
+                        Ordering::Greater
+                    } else if self.end.x > other.end.x {
+                        Ordering::Less
+                    } else {
+                        Ordering::Equal
+                    }
+                }
+            }
+        }
+
+
+        /*
+        Start = Start && Ende = Ende -> Equal
+        Start = Start && Ende > Ende -> Greater
+        Start = Start && Ende < Ende -> Less
+        Start > Start -> Greater
+        Start < Start -> Less
+        */
+
+        /*if self.start.y == other.start.y {
+            if self.end.y == other.end.y {
+                if self.start.x == other.start.x {
+                    if self.end.x == other.end.x {
+                        Ordering::Equal
+                    } else if self.end.x > other.end.x {
+                        Ordering::Greater
+                    } else {
+                        Ordering::Less
+                    }
+                } else if self.start.x > other.start.x {
+                    Ordering::Greater
+                } else {
+                    Ordering::Less
+                }
+            } else if self.end.y > other.end.y {
+                Ordering::Greater
+            } else {
+                Ordering::Less
+            }
+        } else if self.start.y < other.start.y {
+            Ordering::Greater
+        } else {
+            Ordering::Less
+    }*/
+        }
 }
 
 impl PartialOrd for LineSegment {
@@ -220,254 +161,659 @@ impl PartialOrd for LineSegment {
 
 impl PartialEq for LineSegment {
     fn eq(&self, other: &Self) -> bool {
-        self.start == other.start
+        self.start.y == other.start.y
     }
 }
 
 impl Eq for LineSegment {}
 
-    // TODO: Wenn Start hinter Ende liegt, umdrehen!
+////////////////
+//// EVENT /////
+////////////////
+#[derive(PartialEq, Clone, Debug)]
+struct Event {
+    point: Point,
+    event_type: String,
+    segment: LineSegment,
+    other: Option<LineSegment>,
+}
+
+impl Ord for Event {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        // Sortiere nach x-Koordinate und dann nach y-Koordinate
+        if self.point.x < other.point.x {
+            std::cmp::Ordering::Greater//Less
+        } else if self.point.x > other.point.x {
+            std::cmp::Ordering::Less//Greater
+        } else {
+            if self.point.y > other.point.y {
+                std::cmp::Ordering::Greater//Less
+            } else if self.point.y < other.point.y {
+                std::cmp::Ordering::Less//Greater
+            } else {
+                std::cmp::Ordering::Equal
+            }
+        }
+    }
+}
+
+impl PartialOrd for Event {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Eq for Event {}
+
+////////////////
+/// HELPERS ////
+////////////////
+fn read_segments_from_file(filename: &str) -> Vec<LineSegment> {
+    let mut segments = Vec::new();
+    let file = std::fs::read_to_string(filename).expect("Could not read file");
+    let mut current_id = 0;
+    for line in file.lines() {
+        let mut parts = line.split_whitespace();
+        let mut x1: f64 = parts.next().unwrap().parse().unwrap();
+        let y1: f64 = parts.next().unwrap().parse().unwrap();
+        let mut x2: f64 = parts.next().unwrap().parse().unwrap();
+        let y2: f64 = parts.next().unwrap().parse().unwrap();
+
+        // Erstellung der Punkte
+        let start = Point { x: x1, y: y1 };
+        let end = Point { x: x2, y: y2 };
+
+        // if start == end {
+        //     continue;
+        // }
+
+        // if start.x == end.x {
+        //     continue;
+        // } else {
+            if start.x < end.x {
+                segments.push(LineSegment {
+                    start: Point { x: x1, y: y1 },
+                    end: Point { x: x2, y: y2 },
+                    id: current_id,
+                });
+            } else {
+                segments.push(LineSegment {
+                    start: Point { x: x2, y: y2 },
+                    end: Point { x: x1, y: y1 },
+                    id: current_id,
+                });
+            }
+            current_id += 1;
+        }
+    // }
+    segments
+}
+
+fn contains_event(heap: &BinaryHeap<Event>, event: &Event) -> bool {
+    // Prüfung, ob event in heap vorhanden ist
+    for e in heap.iter() {
+        if e == event || e.point == event.point {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+fn remove_duplicates<T: std::hash::Hash + Eq + Clone>(vec: Vec<T>) -> Vec<T> {
+    let mut seen = HashSet::new();
+    vec.into_iter().filter(|item| seen.insert(item.clone())).collect()
+}
+
+// Funktion zum Ausgeben der Events
+fn print_events(events: &BinaryHeap<Event>) {
+    // for item in events.iter() {
+    //     println!("{:?}", item);
+    // }
+    if events.len() % 100 == 0 {
+        println!("Events: {:?}", events.len());
+    }
+}
+
+////////////
+/// MAIN ///
+////////////
+
 fn main() {
-    let mut segments = vec![
-        LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 3.0 } },
-        LineSegment { start: Point { x: 0.0, y: 0.0 }, end: Point { x: 4.0, y: 4.0 } },
-        LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 4.0, y: 0.0 } },
-        LineSegment { start: Point { x: 0.3, y: 2.0 }, end: Point { x: 0.6, y: 1.0 } },
-        LineSegment { start: Point { x: 3.16, y: 1.24 }, end: Point { x: 3.9, y: 3.32 } },
-        LineSegment { start: Point { x: 2.0, y: 1.5 }, end: Point { x: 4.0, y: 1.5 } },
-        LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 0.0, y: 0.0 } },
-        LineSegment { start: Point { x: -0.5, y: 4.0 }, end: Point { x: 0.5, y: 4.0 } },
-    ];
-
-
-    let file_path = "strecken/s_1000_1.dat";
+    // let file_path = "strecken/s_5_1.dat";
+    //let file_path = "strecken/s_1000_1.dat";
     //let file_path = "strecken/s_10000_1.dat";
-    //let file_path = "strecken/s_100000_1.dat";
-    //segments = read_segments_from_file(file_path);
+    let file_path = "strecken/s_100000_1.dat";
+    let segments = read_segments_from_file(file_path);
+
+    // Ausgabe
+    // for item in segments.iter() {
+    //     println!("{:?}", item);
+    // }
 
     // let segments = vec![
-    //     LineSegment { start: Point { x: -1.0, y: 10.0 }, end: Point { x: 10.0, y: 3.0 } },
-    //     LineSegment { start: Point { x: 0.0, y: 8.0 }, end: Point { x: 9.0, y: 4.0 } },
-    //     LineSegment { start: Point { x: 1.0, y: 6.0 }, end: Point { x: 4.0, y: 0.0 } },
-    //     LineSegment { start: Point { x: 2.0, y: 4.0 }, end: Point { x: 7.0, y: 1.0 } },
-    //     LineSegment { start: Point { x: 3.0, y: 2.0 }, end: Point { x: 5.0, y: 3.32 } },
+    //     LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 3.0 } },
+    //     LineSegment { start: Point { x: 0.0, y: 0.0 }, end: Point { x: 4.0, y: 4.0 } },
+    //     LineSegment { start: Point { x: 0.3, y: 2.0 }, end: Point { x: 0.6, y: 0.5 } },
+    //     LineSegment { start: Point { x: 3.16, y: 1.24 }, end: Point { x: 3.9, y: 3.32 } },
+    //     LineSegment { start: Point { x: 2.0, y: 1.5 }, end: Point { x: 4.0, y: 1.5 } },
     // ];
+
+    // let segments = vec![
+    //     LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 1.0 }, id: 2},
+    //     LineSegment { start: Point { x: 1.0, y: 0.0 }, end: Point { x: 4.0, y: 4.0 }, id: 3 },
+    //     LineSegment { start: Point { x: 2.0, y: 4.0 }, end: Point { x: 5.0, y: 0.0 }, id: 1 },
+    // ];
+
+    // Füge alle segmente in key_map ein
+    let mut key_map = BTreeMap::new();
+    for item in segments.iter() {
+        key_map.insert(item.id, *item);
+    }
+
+    let mut sweep_line = Vec::new();
+    //sweep_line = build_sweep_line(&segments);
 
     let mut events = BinaryHeap::new();
 
-    // Ereignisse erzeugen
-    for segment in &segments {
+    // Initialisiere event queue x = all segment endpoints
+    // Sortiere x by increasing x and y
+    for item in segments {
         events.push(Event {
-            point: segment.start,
-            event_type: EventType::Start,
-            segment: Some(*segment),
+            point: item.start,
+            event_type: "Start".to_owned(),
+            segment: item,
+            other: None
         });
         events.push(Event {
-            point: segment.end,
-            event_type: EventType::End,
-            segment: Some(*segment),
+            point: item.end,
+            event_type: "End".to_owned(),
+            segment: item,
+            other: None
         });
-        // Ausgabe, dass Start und End Events hinzugefügt wurden
-        ////println!("EVENT: Start event at (x: {:.2}, y: {:.2})", segment.start.x, segment.start.y);
-        ////println!("EVENT: End event at (x: {:.2}, y: {:.2})\n", segment.end.x, segment.end.y);
+    }
 
-        // Ausgabe der events mit hilfe der tostring funktion in Schleife
-        // //println!("Events einfügen:");
-        // for event in &events {
-        //     print!("{}", event.to_string());
-        // }
-        // //println!("\n");
-    }    
-
-    // Ausgabe mit pop
-    // //println!("Events:");
     // while let Some(event) = events.pop() {
-    //    //println!("Even: {}", event.to_string());
+    //     println!("Event: {:?} {:?}", event.point.x, event.point.y);
     // }
-    // //println!("----------------------------------");
 
-    let mut sweep_line = BTreeSet::new();
+    // Initialisiere sweep line SL to be empty
+    //let mut sweep_line = BTreeSet::new();
     let mut intersections = Vec::new();
 
-    // Ausgabe der events mit hilfe der tostring funktion in Schleife
-    // //println!("Abschleßende Events:");
-    // for event in &events {
-    //     print!("{}", event.to_string());
-    // }
-    // //println!("\n");
-
     while let Some(event) = events.pop() {
-
-        // Ausgabe der events mit hilfe der tostring funktion in Schleife
-        // //println!("Events:");
-        // for event in &events {
-        //     print!("{}", event.to_string());
-        // }
-        // //println!("\n");
-
-        match event.event_type {
-            EventType::Start => {
-                if let Some(segment) = event.segment {
-                    //println!("==================================");
-                    // Ausgabe des aktiven Segments
-                    //println!("CURRENT: (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2})", segment.start.x, segment.start.y, segment.end.x, segment.end.y);
-
-                    // Füge das Segment zur Sweep Line hinzu
-                    sweep_line.insert(segment);
-
-                    // Ausgabe der aktuellen Sweep Line
-                    //println!("----------------------------------");
-                    //println!("Sweep Line:");
-                    //for segment in &sweep_line {
-                        //println!("(x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2})", segment.start.x, segment.start.y, segment.end.x, segment.end.y);
-                    //}
-                    //println!("----------------------------------");
-
-                    // Prüfe auf Schnittpunkte mit benachbarten Segmenten
-
-                    // Finde vorheriges und nächstes Segment in sweep_line
-                    let pre = sweep_line.range(..segment).rev().take(1).next();
-                    let post = sweep_line.range(segment..).skip(1).take(1).next();
-
-                    // pre und post in vec
-                    let mut vec = Vec::new();
-                    if let Some(pre) = pre {
-                        vec.push(pre);
-                    }
-                    if let Some(post) = post {
-                        vec.push(post);
-                    }
-
-                    // Prüfe auf Schnittpunkte
-                    // for neighbor in vec {
-                    //     if let Some(point) = segment.intersect(neighbor) {
-                    //         events.push(Event {
-                    //             point,
-                    //             event_type: EventType::Intersection(point),
-                    //             segment: None,
-                    //         });
-                    //     }
-                    // }
-
-                    for neighbor in sweep_line.range(..segment).rev().take(1).chain(sweep_line.range(segment..).skip(1).take(1)) {
-                        // Ausgabe, was verglichen wird
-                        println!("?");
-                    }
-
-
-                    for neighbor in sweep_line.clone() { //.range(..segment).rev().take(1).chain(sweep_line.range(segment..).skip(1).take(1)) {
-                        if neighbor.start == segment.start {
-                            continue;
-                        }
-                        println!("!");
-                        // Ausgabe, was verglichen wird
-                        ////println!("COMPARING: Segment from (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2}) with segment from (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2})", segment.start.x, segment.start.y, segment.end.x, segment.end.y, neighbor.start.x, neighbor.start.y, neighbor.end.x, neighbor.end.y);
-                        if let Some(point) = segment.intersect(&neighbor) {
-                            events.push(Event {
-                                point,
-                                event_type: EventType::Intersection(point),
-                                segment: None,
-                            });
-                            // Ausgabe, dass ein Schnittpunkt gefunden wurde
-                            //println!("INTERSECTION: At (x: {:.2}, y: {:.2})\n", point.x, point.y);
-                        }
-                    }
-                    //println!("==================================");
-                }
+        match event.event_type.as_str() {
+            "Start" => {
+                handle_start_event(&mut events, event, &mut sweep_line);
+                // print_events(&events);
+                // print_sweep_line(&sweep_line);
             }
-            // EventType Delete
-            /*EventType::Delete => {
-
-
-
+            "End" => {
+                handle_end_event(&mut events, event, &mut sweep_line, &key_map);
+                // print_events(&events);
+                // print_sweep_line(&sweep_line);
             }
-            */
-            EventType::End => {
-                if let Some(segment) = event.segment {
-                    // Entferne das Segment aus der Sweep Line
-                    sweep_line.remove(&segment);
-                    // Ausgabe der Entfernung
-                    //println!("REMOVE: Segment from (x: {:.2}, y: {:.2}) to (x: {:.2}, y: {:.2}) removed from sweep line\n", segment.start.x, segment.start.y, segment.end.x, segment.end.y);
-
-                    // Prüfe auf Schnittpunkte zwischen den benachbarten Segmenten, die jetzt direkt nebeneinander liegen
-                    let prev = sweep_line.range(..segment).rev().take(1).next().cloned();
-                    let next = sweep_line.range(segment..).skip(1).take(1).next().cloned();
-
-                    if let (Some(prev), Some(next)) = (prev, next) {
-                        if let Some(point) = prev.intersect(&next) {
-                            events.push(Event {
-                                point,
-                                event_type: EventType::Intersection(point),
-                                segment: None,
-                            });
-                        }
-                    }
-                }
+            "Intersection" => {
+                intersections.push(handle_intersection_event(&mut events, event, &mut sweep_line));
+                // print_events(&events);
+                // print_sweep_line(&sweep_line);
+                // let intersections_clone = intersections.clone();
+                // if intersections_clone.len() % 100 == 0 {
+                //     let test = remove_duplicates(intersections_clone);
+                //     println!("Number of intersections: {}", test.len());
+                // }
             }
-            EventType::Intersection(point) => {
-                intersections.push(point);
+            _ => {}
+        }
+    }
+
+    // Clear cmd
+    print!("\x1B[2J\x1B[1;1H");
+
+    println!("Number of intersections: {}", intersections.len());
+    // Sortiere Intersections nach X-Wert
+    intersections.sort_by(|a, b| a.x.partial_cmp(&b.x).unwrap());
+
+    // for intersection in intersections {
+    //     println!("{:?}", intersection);
+    // }
+}
+
+// Baue sweepline aus allen Segmenten, nach Y-Wert sortiert
+fn build_sweep_line(segments: &Vec<LineSegment>) -> Vec<LineSegment> {
+    let mut sweep_line = Vec::new();
+    for item in segments {
+        sweep_line.push(*item);
+    }
+
+    sweep_line.sort_by(|a, b| a.start.y.partial_cmp(&b.start.y).unwrap());
+    sweep_line
+}
+
+
+// Funktion, um sweep line auszugeben
+fn print_sweep_line(sweep_line: &BTreeSet<LineSegment>) {
+    for item in sweep_line.iter() {
+        println!("{:?}", item);
+    }
+    println!("-------------------");
+}
+
+// Funktion, um Nachbarn von Element in sweepline vector zu finden
+fn find_neighbours(sweep_line: &Vec<LineSegment>, element: LineSegment) -> (Option<LineSegment>, Option<LineSegment>) {
+    let mut above = None;
+    let mut below = None;
+
+    for (index, item) in sweep_line.iter().enumerate() {
+        if item.id == element.id {
+            if index > 0 {
+                above = Some(sweep_line[index - 1]);
+            }
+            if index < sweep_line.len() - 1 {
+                below = Some(sweep_line[index + 1]);
             }
         }
     }
 
-
-    // Zeilenweise Ausgabe der Schnittpunkte
-    //println!("Intersections:");
-    // for point in intersections {
-    //     println!("Intersection at (x: {:.2}, y: {:.2})\n", point.x, point.y);
-    // }
-    // Anzahl der Schnittpunkte
-    println!("Number of intersections: {}", intersections.len());
+    (above, below)
 }
 
-// Unit Test for intersect
+// Remove item from sweepline
+fn remove_item(sweep_line: &mut Vec<LineSegment>, element: LineSegment) {
+    let mut index = 0;
+    for (i, item) in sweep_line.iter().enumerate() {
+        if item == &element {
+            index = i;
+        }
+    }
+
+    sweep_line.remove(index);
+}
+
+// Remove item by id
+fn remove_item_by_id(sweep_line: &mut Vec<LineSegment>, id: usize) {
+    let mut index = 0;
+    for (i, item) in sweep_line.iter().enumerate() {
+        if item.id == id {
+            index = i;
+        }
+    }
+
+    sweep_line.remove(index);
+}
+
+// Switch two items in sweepline
+fn swap_items(sweep_line: &mut Vec<LineSegment>, element1: LineSegment, element2: LineSegment) {
+    let mut index1 = 0;
+    let mut index2 = 0;
+    for (i, item) in sweep_line.iter().enumerate() {
+        if item == &element1 {
+            index1 = i;
+        }
+        if item == &element2 {
+            index2 = i;
+        }
+    }
+
+    sweep_line.swap(index1, index2);
+}
+
+// Insert item at the start of sweepline
+fn insert_item(sweep_line: &mut Vec<LineSegment>, element: LineSegment) {
+    sweep_line.insert(0, element);
+
+    // Sortiere nach Start-Y-Wert, dann nach End-Y-Wert
+    sweep_line.sort_by(|a, b| {
+        a.start.y.partial_cmp(&b.start.y)
+            .unwrap()
+            .then_with(|| a.end.y.partial_cmp(&b.end.y).unwrap())
+    });    
+}
+
+// Funktion, um End-Events zu verarbeiten
+fn handle_end_event(events: &mut BinaryHeap<Event>, event: Event, sweep_line: &mut Vec<LineSegment>, key_map: &BTreeMap<usize, LineSegment>) {
+    let segE = event.segment;
+
+    // Find the segments segA and segB immediately above and below segE in SL
+    //let above = sweep_line.range(..event.segment).next_back();
+    //let below = sweep_line.range(event.segment..).skip(1).next();
+
+    let (above, below) = find_neighbours(&sweep_line, segE);
+
+    if let (Some(above), Some(below)) = (above, below) {
+        if let Some(point) = below.intersect(&above) {
+            let new_event = Event {
+                point,
+                event_type: "Intersection".to_owned(),
+                segment: below,
+                other: Some(above),
+            };
+
+            if !contains_event(&events, &new_event) && new_event.point != event.point {
+                events.push(new_event);
+            }
+
+        }
+    }
+
+    remove_item_by_id(sweep_line, segE.id);
+}
+
+// Funktion, um Start-Events zu verarbeiten
+fn handle_start_event(events: &mut BinaryHeap<Event>, event: Event, sweep_line: &mut Vec<LineSegment>) {
+    let segE = event.segment;
+    //sweep_line.push(segE);
+    insert_item(sweep_line, segE);
+
+    //let test1 = LineSegment { start: Point { x: 76.772, y: 97.84 }, end: Point { x: 76.8412, y: 97.5077 }, id: 0 };
+
+    let segE1 = event.segment;
+    // Vergleiche x und y von segE1 mit test1
+    // if segE1.start.x == test1.start.x && segE1.start.y == test1.start.y {
+    //     println!("SegE1: {:?}", segE1);
+    // }
+
+
+    // Find the segments segA and segB immediately above and below segE in SL
+    //let above = sweep_line.range(..event.segment).next_back();
+    //let below = sweep_line.range(event.segment..).skip(1).next();
+
+    let (above, below) = find_neighbours(&sweep_line, segE);
+
+    if let Some(above) = above {
+        if let Some(point) = segE.intersect(&above) {
+            let new_event = Event {
+                point,
+                event_type: "Intersection".to_owned(),
+                segment: segE,
+                other: Some(above),
+            };
+
+            events.push(new_event);
+        }
+    }
+
+    if let Some(below) = below {
+        if let Some(point) = segE.intersect(&below) {
+            let new_event = Event {
+                point,
+                event_type: "Intersection".to_owned(),
+                segment: segE,
+                other: Some(below),
+            };
+
+            events.push(new_event);
+        }
+    }
+}
+
+// Funktion, um Intersection-Events zu verarbeiten
+fn handle_intersection_event(events: &mut BinaryHeap<Event>, event: Event, sweep_line: &mut Vec<LineSegment>) -> Point {
+
+    // if sweep_line.len() >= 7 {
+    //     println!("Sweep Line: {:?}", sweep_line.len());
+    //     print_sweep_line(&sweep_line);
+    // }
+
+    let mut segE1 = event.segment;
+    let mut segE2 = event.other.unwrap();
+
+    let test1 = LineSegment { start: Point { x: 76.772, y: 97.84 }, end: Point { x: 76.8412, y: 97.5077 }, id: 0 };
+
+    // Vergleiche x und y von segE1 mit test1
+    // if segE1.start.x == test1.start.x && segE1.start.y == test1.start.y {
+    //     println!("SegE1: {:?}", segE1);
+    // }
+
+    // if segE2.start.x == test1.start.x && segE2.start.y == test1.start.y {
+    //     println!("SegE2: {:?}", segE2);
+    // }
+
+    
+    // sweep_line.remove(&segE1);
+    // sweep_line.remove(&segE2);
+    remove_item_by_id(sweep_line, segE1.id);
+    remove_item_by_id(sweep_line, segE2.id);
+
+    // Swap segE and segF in SL
+    segE1 = LineSegment { start: event.point, end: segE1.end, id: segE1.id };
+    segE2 = LineSegment { start: event.point, end: segE2.end, id: segE2.id};
+    
+    insert_item(sweep_line, segE1);
+    insert_item(sweep_line, segE2);
+
+    //swap_items(sweep_line, segE1, segE2);
+    //std::mem::swap(&mut segE1, &mut segE2);
+
+    // let mut ret = sweep_line.insert(segE1);
+    // if !ret {
+    //     println!("Item not inserted: {:?}", segE1.id);
+    // }
+    // ret = sweep_line.insert(segE2);
+    // if !ret {
+    //     println!("Item not inserted: {:?}", segE1.id);
+    // }
+
+
+    // Find below of segE2
+    let (above, below) = find_neighbours(&sweep_line, segE1);
+    // Ausgabe von above und below
+    // println!("Above: {:?}", above);
+    // println!("Below: {:?}", below);
+
+    let segA = above;
+
+    let (above, below) = find_neighbours(&sweep_line, segE2);
+    // Ausgabe von above und below
+    // println!("Above: {:?}", above);
+    // println!("Below: {:?}", below);
+
+    let segB: Option<LineSegment> = below;
+
+    // Find the segments segA and segB immediately above and below segE in SL
+    //let segA = sweep_line.range(..segE2).next_back();
+    //let segB = sweep_line.range(segE1..).skip(1).next();
+
+    // Intersect(segE2 with above)
+    if let Some(segA) = segA {
+        if let Some(point) = segE1.intersect(&segA) {
+            let new_event = Event {
+                point,
+                event_type: "Intersection".to_owned(),
+                segment: segE1,
+                other: Some(segA),
+            };
+
+            if !contains_event(&events, &new_event) && new_event.point != event.point {
+                events.push(new_event);
+            } else {
+                // println!("Event already in queue: {:?}", new_event.point);
+            }
+        }
+    }
+
+    // Intersect(segE1 with below)	
+    if let Some(segB) = segB {
+        if let Some(point) = segE2.intersect(&segB) {
+            let new_event = Event {
+                point,
+                event_type: "Intersection".to_owned(),
+                segment: segE2,
+                other: Some(segB),
+            };
+
+            if !contains_event(&events, &new_event) && new_event.point != event.point {
+                events.push(new_event);
+            } else {
+                // println!("Event already in queue: {:?}", new_event.point);
+            }
+            // events.push(new_event);
+        }
+    }
+
+    // if sweep_line.len() >= 7 {
+    //     println!("Sweep Line: {:?}", sweep_line.len());
+    //     print_sweep_line(&sweep_line);
+    // }
+
+    event.point
+}
+
+
+// Unit Test
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
+
     use super::*;
 
     #[test]
-    fn test_line_segment_intersect() {
-        let AB = LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 3.0 } };
-        let CD = LineSegment { start: Point { x: 0.0, y: 0.0 }, end: Point { x: 4.0, y: 4.0 } };
-        let EF = LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 4.0, y: 0.0 } };
-        let GH = LineSegment { start: Point { x: 0.3, y: 2.0 }, end: Point { x: 0.6, y: 1.0 } };
-        let IJ = LineSegment { start: Point { x: 3.16, y: 1.24 }, end: Point { x: 3.9, y: 3.32 } };
-        let KL = LineSegment { start: Point { x: 2.0, y: 1.5 }, end: Point { x: 4.0, y: 1.5 } };
-        let EC = LineSegment { start: Point { x: 0.0, y: 4.0 }, end: Point { x: 0.0, y: 0.0 } };
-        let MN: LineSegment = LineSegment { start: Point { x: -0.5, y: 4.0 }, end: Point { x: 0.5, y: 4.0 } };
-    
-        assert_eq!(AB.intersect(&CD), Some(Point { x: 2.0, y: 2.0 }));
-        assert_eq!(AB.intersect(&EF), Some(Point { x: 2.0, y: 2.0 }));
-        assert_eq!(CD.intersect(&EF), Some(Point { x: 2.0, y: 2.0 }));
-        assert_eq!(AB.intersect(&GH), Some(Point { x: 0.4545454545454548, y: 1.4848484848484849 }));
-        assert_eq!(AB.intersect(&IJ), Some(Point { x: 3.622836363636364, y: 2.5409454545454544 }));
-        assert_eq!(KL.intersect(&EF), Some(Point { x: 2.5, y: 1.5 }));
-        assert_eq!(KL.intersect(&IJ), Some(Point { x: 3.2525000000000004, y: 1.5 }));
-        assert_eq!(EC.intersect(&EF), Some(Point { x: 0.0, y: 4.0 }));
-        assert_eq!(EC.intersect(&CD), Some(Point { x: 0.0, y: 0.0 }));
-        assert_eq!(MN.intersect(&EF), Some(Point { x: 0.0, y: 4.0 }));
-        assert_eq!(MN.intersect(&EC), Some(Point { x: 0.0, y: 4.0 }));
+    fn test_above_below() {
+        let segments = vec![
+            LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 3.0 }, id: 0 },
+            LineSegment { start: Point { x: 0.0, y: 0.0 }, end: Point { x: 4.0, y: 4.0 }, id: 0 },
+            LineSegment { start: Point { x: 0.3, y: 2.0 }, end: Point { x: 0.6, y: 0.5 }, id: 0 },
+            LineSegment { start: Point { x: 3.16, y: 1.24 }, end: Point { x: 3.9, y: 3.32 }, id: 0 },
+            LineSegment { start: Point { x: 2.0, y: 1.5 }, end: Point { x: 4.0, y: 1.5 }, id: 0 },
+        ];
 
-        // Segmente in Liste einfügen
-        let segments = vec![AB, CD, EF, GH, IJ];
+        let mut sweep_line = BTreeSet::new();
 
-        // Teste alle Punkte miteinander in segments
-        // for (i, segment) in segments.iter().enumerate() {
-        //     for (j, other) in segments.iter().enumerate() {
-        //         if i == j {
-        //             continue;
-        //         }
+        // Füge segmente in sweep_line ein
+        for item in segments {
+            sweep_line.insert(item);
+        }
 
-        //         let result = segment.intersect(other);
+        // Ausgabe der Segmente in sweep_line
+        for item in sweep_line.iter() {
+            println!("{:?}", item);
+        }
 
-        //         // Ausgabe, ob Schnittpunkt oder None
-        //         match result {
-        //             Some(point) => {
-        //                 //println!("Intersection at (x: {:.2}, y: {:.2})\n", point.x, point.y);
-        //             }
-        //             None => todo!(),
-        //         }
-        //     }
-        // }
-     }
+        let target = LineSegment { start: Point { x: 3.16, y: 1.24 }, end: Point { x: 3.9, y: 3.32 }, id: 0 };
+
+        let above = sweep_line.range(..target).next_back();
+        let below = sweep_line.range(target..).skip(1).next();
+
+        assert_eq!(below, Some(&LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 3.0 }, id: 0 }));
+        assert_eq!(above, Some(&LineSegment { start: Point { x: 2.0, y: 1.5 }, end: Point { x: 4.0, y: 1.5 }, id: 0 }));
+    }
+
+    // Test contains_event
+    #[test]
+    fn test_contains_event() {
+        let mut events = BinaryHeap::new();
+        let event = Event {
+            point: Point { x: 1.0, y: 1.0 },
+            event_type: "Start".to_owned(),
+            segment: LineSegment { start: Point { x: 1.0, y: 1.0 }, end: Point { x: 2.0, y: 2.0 }, id: 0 },
+            other: None
+        };
+
+        let event2 = event.clone();
+
+        events.push(event);
+
+        assert_eq!(contains_event(&events, &event2), true);
+    }
+
+    // test swap funktion
+    #[test]
+    fn test_swap() {
+        let segments = vec![
+            LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 3.0 }, id: 0 },
+            LineSegment { start: Point { x: 0.0, y: 0.0 }, end: Point { x: 4.0, y: 4.0 }, id: 0 },
+            LineSegment { start: Point { x: 0.3, y: 2.0 }, end: Point { x: 0.6, y: 0.5 }, id: 0 },
+            LineSegment { start: Point { x: 3.16, y: 1.24 }, end: Point { x: 3.9, y: 3.32 }, id: 0 },
+            LineSegment { start: Point { x: 2.0, y: 1.5 }, end: Point { x: 4.0, y: 1.5 }, id: 0 },
+        ];
+
+        let mut sweep_line = BTreeSet::new();
+
+        // Füge segmente in sweep_line ein
+        for item in segments {
+            sweep_line.insert(item);
+        }
+
+        // Ausgabe der Segmente in sweep_line
+        for item in sweep_line.iter() {
+            println!("{:?}", item);
+        }
+
+        // Simuliere Schnitt
+        println!("Simuliere Schnitt");
+        let mut segE1 = LineSegment { start: Point { x: 0.0, y: 0.0 }, end: Point { x: 4.0, y: 4.0 }, id: 0 };
+        let mut segE2 = LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 3.0 }, id: 0 };
+        
+        sweep_line.remove(&segE1);
+        sweep_line.remove(&segE2);
+
+        segE1 = LineSegment { start: Point { x: 2.0, y: 2.0 }, end: Point { x: 4.0, y: 4.0 }, id: 0 };
+        segE2 = LineSegment { start: Point { x: 2.0, y: 2.0 }, end: Point { x: 5.0, y: 3.0 }, id: 0 };
+
+        sweep_line.insert(segE1);
+        sweep_line.insert(segE2);
+
+        // Ausgabe der Segmente in sweep_line
+        for item in sweep_line.iter() {
+            println!("{:?}", item);
+        }
+
+        let target = LineSegment { start: Point { x: 3.16, y: 1.24 }, end: Point { x: 3.9, y: 3.32 }, id: 0 };
+
+        let above = sweep_line.range(..target).next_back();
+        let below = sweep_line.range(target..).skip(1).next();
+
+        assert_eq!(below, None);
+        assert_eq!(above, Some(&LineSegment { start: Point { x: 2.0, y: 1.5 }, end: Point { x: 4.0, y: 1.5 }, id: 0 }));
+
+    }
+
+    // Test for event ordering
+    #[test]
+    fn test_event_ordering() {
+        let event1 = Event {
+            point: Point { x: 2.0, y: 1.0 },
+            event_type: "Start".to_owned(),
+            segment: LineSegment { start: Point { x: 1.0, y: 1.0 }, end: Point { x: 2.0, y: 2.0 }, id: 0 },
+            other: None
+        };
+
+        let event2 = Event {
+            point: Point { x: 1.0, y: 1.5 },
+            event_type: "Start".to_owned(),
+            segment: LineSegment { start: Point { x: 1.0, y: 1.0 }, end: Point { x: 2.0, y: 2.0 }, id: 0 },
+            other: None
+        };
+
+        let event3 = Event {
+            point: Point { x: 2.0, y: 1.0 },
+            event_type: "Start".to_owned(),
+            segment: LineSegment { start: Point { x: 1.0, y: 1.0 }, end: Point { x: 2.0, y: 2.0 }, id: 0 },
+            other: None
+        };
+
+        let mut events = BinaryHeap::new();
+        events.push(event1.clone());
+        events.push(event2.clone());
+        events.push(event3.clone());
+
+        let mut vec = Vec::new();
+        while let Some(event) = events.pop() {
+            vec.push(event);
+        }
+
+        assert_eq!(vec[0], event2);
+        assert_eq!(vec[1], event3);
+        assert_eq!(vec[2], event1);
+    }
+
+    // Test für Schnittfunktion
+    #[test]
+    fn test_intersection() {
+        let seg1 = LineSegment { start: Point { x: 76.772, y: 97.84 }, end: Point { x: 76.8412, y: 97.5077 }, id: 0 };
+        let seg2 = LineSegment { start: Point { x: 77.031, y: 97.833 }, end: Point { x: 76.5049, y: 97.1055 }, id: 0 };
+
+        let point = seg1.intersect(&seg2).unwrap();
+        assert_eq!(point, Point { x: 76.831, y: 97.5565 });
+    }
 }
