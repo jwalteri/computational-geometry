@@ -36,9 +36,27 @@ const PRECISION: f64 = 0.0001;
 fn main() {
 
     let start_time = Instant::now();
-    //let file_path = "strecken/s_1000_1.dat";
-    let file_path = "strecken/s_10000_1.dat";
+    let file_path = "strecken/s_1000_1.dat";
+    //let file_path = "strecken/s_10000_1.dat";
     //let file_path = "strecken/s_100000_1.dat";
+
+    let segments = read_segments_from_file(file_path);
+
+    let mut intersections = 0;
+
+    for i in 0..segments.len() - 1 {
+        for j in i + 1..segments.len() {
+            if let Some(intersection) = segments[i].intersect(&segments[j]) {
+                intersections += 1;
+                //println!("Schnittpunkt: {} {}", intersection.x, intersection.y);
+            }
+        }
+    }
+
+    // Ausgabe Schnittpunkte
+    println!("{} Schnittpunkte gefunden", intersections);
+
+
 
     // Logging mithilfe von info_message
     let mut info_message = String::new();
@@ -78,11 +96,62 @@ fn main() {
     outcome_file.write_all(info_message.as_bytes()).expect("Fehler bei schreiben der Datei!");
 }
 
+
+fn read_segments_from_file(filename: &str) -> Vec<LineSegment> {
+    let mut segments = Vec::new();
+    let file = std::fs::read_to_string(filename).expect("Could not read file");
+    let mut current_id = 0;
+    for line in file.lines() {
+        let mut parts = line.split_whitespace();
+        let mut x1: f64 = parts.next().unwrap().parse().unwrap();
+        let y1: f64 = parts.next().unwrap().parse().unwrap();
+        let mut x2: f64 = parts.next().unwrap().parse().unwrap();
+        let y2: f64 = parts.next().unwrap().parse().unwrap();
+        segments.push(LineSegment {
+                    start: Point { x: x1, y: y1 },
+                    end: Point { x: x2, y: y2 },
+                });
+    }
+    segments
+}
+
 struct Point {
     x: f64,
     y: f64,
 }
 
+struct LineSegment {
+    start: Point,
+    end: Point
+}
+
+impl LineSegment {
+    fn intersect(&self, other: &LineSegment) -> Option<Point> {
+        let LineSegment { start: p1, end: p2} = self;
+        let LineSegment { start: p3, end: p4} = other;
+
+        let d = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y);
+        if d.abs() < std::f64::EPSILON {
+            return None;
+        }
+
+        let u = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / d;
+        let v = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / d;
+
+        if u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0 {
+            return None;
+        }
+
+        Some(Point {
+            x: Self::round_to_4_decimals(p1.x + u * (p2.x - p1.x)),
+            y: Self::round_to_4_decimals(p1.y + u * (p2.y - p1.y)),
+        })
+    }
+
+    fn round_to_4_decimals(num: f64) -> f64 {
+        (num * 10000.0).round() / 10000.0
+    }
+}
 pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
 
     let n = points.len();
