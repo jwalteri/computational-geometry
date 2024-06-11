@@ -223,13 +223,13 @@ fn read_segments_from_file(filename: &str) -> Vec<LineSegment> {
         let start = Point { x: x1, y: y1 };
         let end = Point { x: x2, y: y2 };
 
-        if start == end {
-            continue;
-        }
+        // if start == end {
+        //     continue;
+        // }
 
-        if start.x == end.x {
-            continue;
-        } else {
+        // if start.x == end.x {
+        //     continue;
+        // } else {
             if start.x < end.x {
                 segments.push(LineSegment {
                     start: Point { x: x1, y: y1 },
@@ -245,7 +245,7 @@ fn read_segments_from_file(filename: &str) -> Vec<LineSegment> {
             }
             current_id += 1;
         }
-    }
+    // }
     segments
 }
 
@@ -281,10 +281,10 @@ fn print_events(events: &BinaryHeap<Event>) {
 
 fn main() {
     // let file_path = "strecken/s_5_1.dat";
-    //let file_path = "strecken/s_1000_1.dat";
-    let file_path = "strecken/s_10000_1.dat";
+    let file_path = "strecken/s_1000_1.dat";
+    //let file_path = "strecken/s_10000_1.dat";
     //let file_path = "strecken/s_100000_1.dat";
-    let segments = read_segments_from_file(file_path);
+    // let segments = read_segments_from_file(file_path);
 
     // Ausgabe
     // for item in segments.iter() {
@@ -299,11 +299,11 @@ fn main() {
     //     LineSegment { start: Point { x: 2.0, y: 1.5 }, end: Point { x: 4.0, y: 1.5 } },
     // ];
 
-    // let segments = vec![
-    //     LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 1.0 }, id: 0},
-    //     LineSegment { start: Point { x: 1.0, y: 0.0 }, end: Point { x: 4.0, y: 4.0 }, id: 1 },
-    //     LineSegment { start: Point { x: 2.0, y: 4.0 }, end: Point { x: 5.0, y: 0.0 }, id: 2 },
-    // ];
+    let segments = vec![
+        LineSegment { start: Point { x: -1.0, y: 1.0 }, end: Point { x: 5.0, y: 1.0 }, id: 2},
+        LineSegment { start: Point { x: 1.0, y: 0.0 }, end: Point { x: 4.0, y: 4.0 }, id: 3 },
+        LineSegment { start: Point { x: 2.0, y: 4.0 }, end: Point { x: 5.0, y: 0.0 }, id: 1 },
+    ];
 
     // Füge alle segmente in key_map ein
     let mut key_map = BTreeMap::new();
@@ -336,24 +336,25 @@ fn main() {
     // }
 
     // Initialisiere sweep line SL to be empty
-    let mut sweep_line = BTreeSet::new();
+    //let mut sweep_line = BTreeSet::new();
+    let mut sweep_line = Vec::new();
     let mut intersections = Vec::new();
 
     while let Some(event) = events.pop() {
         match event.event_type.as_str() {
             "Start" => {
                 handle_start_event(&mut events, event, &mut sweep_line);
-                print_events(&events);
+                // print_events(&events);
                 // print_sweep_line(&sweep_line);
             }
             "End" => {
                 handle_end_event(&mut events, event, &mut sweep_line, &key_map);
-                print_events(&events);
+                // print_events(&events);
                 // print_sweep_line(&sweep_line);
             }
             "Intersection" => {
                 intersections.push(handle_intersection_event(&mut events, event, &mut sweep_line));
-                print_events(&events);
+                // print_events(&events);
                 // print_sweep_line(&sweep_line);
                 // let intersections_clone = intersections.clone();
                 // if intersections_clone.len() % 100 == 0 {
@@ -385,22 +386,75 @@ fn print_sweep_line(sweep_line: &BTreeSet<LineSegment>) {
     println!("-------------------");
 }
 
+// Funktion, um Nachbarn von Element in sweepline vector zu finden
+fn find_neighbours(sweep_line: &Vec<LineSegment>, element: LineSegment) -> (Option<LineSegment>, Option<LineSegment>) {
+    let mut above = None;
+    let mut below = None;
+
+    for (index, item) in sweep_line.iter().enumerate() {
+        if item == &element {
+            if index > 0 {
+                above = Some(sweep_line[index - 1]);
+            }
+            if index < sweep_line.len() - 1 {
+                below = Some(sweep_line[index + 1]);
+            }
+        }
+    }
+
+    (above, below)
+}
+
+// Remove item from sweepline
+fn remove_item(sweep_line: &mut Vec<LineSegment>, element: LineSegment) {
+    let mut index = 0;
+    for (i, item) in sweep_line.iter().enumerate() {
+        if item == &element {
+            index = i;
+        }
+    }
+
+    sweep_line.remove(index);
+}
+
+// Switch two items in sweepline
+fn swap_items(sweep_line: &mut Vec<LineSegment>, element1: LineSegment, element2: LineSegment) {
+    let mut index1 = 0;
+    let mut index2 = 0;
+    for (i, item) in sweep_line.iter().enumerate() {
+        if item == &element1 {
+            index1 = i;
+        }
+        if item == &element2 {
+            index2 = i;
+        }
+    }
+
+    sweep_line.swap(index1, index2);
+}
+
+// Insert item at the start of sweepline
+fn insert_item(sweep_line: &mut Vec<LineSegment>, element: LineSegment) {
+    sweep_line.insert(0, element);
+}
+
 // Funktion, um End-Events zu verarbeiten
-fn handle_end_event(events: &mut BinaryHeap<Event>, event: Event, sweep_line: &mut BTreeSet<LineSegment>, key_map: &BTreeMap<usize, LineSegment>) {
+fn handle_end_event(events: &mut BinaryHeap<Event>, event: Event, sweep_line: &mut Vec<LineSegment>, key_map: &BTreeMap<usize, LineSegment>) {
     let segE = event.segment;
 
     // Find the segments segA and segB immediately above and below segE in SL
-    let above = sweep_line.range(..event.segment).next_back();
-    let below = sweep_line.range(event.segment..).skip(1).next();
+    //let above = sweep_line.range(..event.segment).next_back();
+    //let below = sweep_line.range(event.segment..).skip(1).next();
 
+    let (above, below) = find_neighbours(&sweep_line, segE);
 
     if let (Some(above), Some(below)) = (above, below) {
-        if let Some(point) = below.intersect(above) {
+        if let Some(point) = below.intersect(&above) {
             let new_event = Event {
                 point,
                 event_type: "Intersection".to_owned(),
-                segment: *below,
-                other: Some(*above),
+                segment: below,
+                other: Some(above),
             };
 
             if !contains_event(&events, &new_event) && new_event.point != event.point {
@@ -410,45 +464,14 @@ fn handle_end_event(events: &mut BinaryHeap<Event>, event: Event, sweep_line: &m
         }
     }
 
-    // Find segment in key_map
-    let real_item = key_map.get(&segE.id);
-    if real_item.is_some() {
-        let mut ret = sweep_line.remove(real_item.unwrap());
-        if ret {
-            // println!("Item removed: Id: {:?} Start: {:?} Ende: {:?}", segE.id, segE.start, segE.end);
-        } else {
-            let clonedSweepLine = sweep_line.clone();
-            let real_item = clonedSweepLine.iter().find(|&p| p.id == segE.id);
-            if real_item.is_some() {
-                ret = sweep_line.remove(real_item.unwrap());
-                if ret {
-            // println!("Item removed: Id: {:?} Start: {:?} Ende: {:?}", segE.id, segE.start, segE.end);
-                } else {
-                    println!("Item BOOM not found: {:?}", segE.id);
-                }
-            } else {
-                println!("Item REALLY not found: {:?}", segE.id);
-            }
-        }
-    } else {
-        println!("Item not found: {:?}", segE.id);
-    }
-
-    // let clonedSweepLine = sweep_line.clone();
-    // let real_item = clonedSweepLine.iter().find(|&p| p.id == segE.id);
-    // if real_item.is_some() {
-    //     sweep_line.remove(real_item.unwrap());
-    //     println!("Item removed: {:?}", segE.id)
-    // } else {
-    //     println!("Item not found: {:?}", segE.id);
-    // }
-
+    remove_item(sweep_line, segE);
 }
 
 // Funktion, um Start-Events zu verarbeiten
-fn handle_start_event(events: &mut BinaryHeap<Event>, event: Event, sweep_line: &mut BTreeSet<LineSegment>) {
+fn handle_start_event(events: &mut BinaryHeap<Event>, event: Event, sweep_line: &mut Vec<LineSegment>) {
     let segE = event.segment;
-    sweep_line.insert(segE);
+    //sweep_line.push(segE);
+    insert_item(sweep_line, segE);
 
     let test1 = LineSegment { start: Point { x: 76.772, y: 97.84 }, end: Point { x: 76.8412, y: 97.5077 }, id: 0 };
 
@@ -460,16 +483,18 @@ fn handle_start_event(events: &mut BinaryHeap<Event>, event: Event, sweep_line: 
 
 
     // Find the segments segA and segB immediately above and below segE in SL
-    let above = sweep_line.range(..event.segment).next_back();
-    let below = sweep_line.range(event.segment..).skip(1).next();
+    //let above = sweep_line.range(..event.segment).next_back();
+    //let below = sweep_line.range(event.segment..).skip(1).next();
+
+    let (above, below) = find_neighbours(&sweep_line, segE);
 
     if let Some(above) = above {
-        if let Some(point) = segE.intersect(above) {
+        if let Some(point) = segE.intersect(&above) {
             let new_event = Event {
                 point,
                 event_type: "Intersection".to_owned(),
                 segment: segE,
-                other: Some(*above),
+                other: Some(above),
             };
 
             events.push(new_event);
@@ -477,12 +502,12 @@ fn handle_start_event(events: &mut BinaryHeap<Event>, event: Event, sweep_line: 
     }
 
     if let Some(below) = below {
-        if let Some(point) = segE.intersect(below) {
+        if let Some(point) = segE.intersect(&below) {
             let new_event = Event {
                 point,
                 event_type: "Intersection".to_owned(),
                 segment: segE,
-                other: Some(*below),
+                other: Some(below),
             };
 
             events.push(new_event);
@@ -491,7 +516,7 @@ fn handle_start_event(events: &mut BinaryHeap<Event>, event: Event, sweep_line: 
 }
 
 // Funktion, um Intersection-Events zu verarbeiten
-fn handle_intersection_event(events: &mut BinaryHeap<Event>, event: Event, sweep_line: &mut BTreeSet<LineSegment>) -> Point {
+fn handle_intersection_event(events: &mut BinaryHeap<Event>, event: Event, sweep_line: &mut Vec<LineSegment>) -> Point {
 
     // if sweep_line.len() >= 7 {
     //     println!("Sweep Line: {:?}", sweep_line.len());
@@ -512,6 +537,8 @@ fn handle_intersection_event(events: &mut BinaryHeap<Event>, event: Event, sweep
         println!("SegE2: {:?}", segE2);
     }
 
+    swap_items(sweep_line, segE1, segE2);
+    /*
     sweep_line.remove(&segE1);
     sweep_line.remove(&segE2);
 
@@ -528,19 +555,25 @@ fn handle_intersection_event(events: &mut BinaryHeap<Event>, event: Event, sweep
     if !ret {
         println!("Item not inserted: {:?}", segE1.id);
     }
+ */
+
+    // Find below of segE2
+    let (segA, _) = find_neighbours(&sweep_line, segE2);
+    let (_, segB) = find_neighbours(&sweep_line, segE1);
+
 
     // Find the segments segA and segB immediately above and below segE in SL
-    let segA = sweep_line.range(..segE2).next_back();
-    let segB = sweep_line.range(segE1..).skip(1).next();
+    //let segA = sweep_line.range(..segE2).next_back();
+    //let segB = sweep_line.range(segE1..).skip(1).next();
 
     // Intersect(segE2 with above)
     if let Some(segA) = segA {
-        if let Some(point) = segE2.intersect(segA) {
+        if let Some(point) = segE2.intersect(&segA) {
             let new_event = Event {
                 point,
                 event_type: "Intersection".to_owned(),
                 segment: segE2,
-                other: Some(*segA),
+                other: Some(segA),
             };
 
             if !contains_event(&events, &new_event) && new_event.point != event.point {
@@ -553,12 +586,12 @@ fn handle_intersection_event(events: &mut BinaryHeap<Event>, event: Event, sweep
 
     // Intersect(segE1 with below)	
     if let Some(segB) = segB {
-        if let Some(point) = segE1.intersect(segB) {
+        if let Some(point) = segE1.intersect(&segB) {
             let new_event = Event {
                 point,
                 event_type: "Intersection".to_owned(),
                 segment: segE1,
-                other: Some(*segB),
+                other: Some(segB),
             };
 
             if !contains_event(&events, &new_event) && new_event.point != event.point {
