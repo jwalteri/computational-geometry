@@ -1,0 +1,1 @@
+Ermitteln Sie für ein vorgegebenes konvexes Polygon ( polygon.txt und testpolygon.txt) mit Linear Programming den grössten einbeschreibbaren Kreis. Verwenden Sie zur Formulierung und Lösung des Problems entweder (vorzugsweise) MATLAB oder einen Online-Löser aus dem Internet.
