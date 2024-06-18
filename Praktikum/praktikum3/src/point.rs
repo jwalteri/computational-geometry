@@ -1,3 +1,6 @@
+use std::hash::Hasher;
+use std::hash::Hash;
+
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point {
@@ -11,3 +14,13 @@ impl Point {
     }
 }
 
+// Eq für Point implementieren
+impl Eq for Point {}
+
+// Hash für Point implementieren
+impl Hash for Point {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.x.to_bits().hash(state);
+        self.y.to_bits().hash(state);
+    }
+}

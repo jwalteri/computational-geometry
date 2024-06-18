@@ -36,8 +36,8 @@ const PRECISION: f64 = 0.0001;
 fn main() {
 
     let start_time = Instant::now();
-    //let file_path = "strecken/s_1000_1.dat";
-    let file_path = "strecken/s_10000_1.dat";
+    let file_path = "strecken/s_1000_1.dat";
+    // let file_path = "strecken/s_10000_1.dat";
     //let file_path = "strecken/s_100000_1.dat";
 
     let segments = read_segments_from_file(file_path);
