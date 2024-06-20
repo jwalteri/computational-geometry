@@ -2,7 +2,7 @@ use crate::{line::Line, point::Point};
 
 
 pub struct SweepLine {
-    segments: Vec<SweepLineEntry>,
+    pub segments: Vec<SweepLineEntry>,
 }
 
 #[derive(Debug, Clone)]
@@ -35,8 +35,18 @@ impl SweepLine {
 
     pub fn sort_y(&mut self) {
         // Sort the segments by their points y-coordinate. biggest y-coordinate first
-        self.segments.sort_by(|a, b| b.point.y.partial_cmp(&a.point.y).unwrap());
+        //self.segments.sort_by(|a, b| b.point.y.partial_cmp(&a.point.y).unwrap());
+        self.segments.sort_by(|a, b| {
+            b.point.y.partial_cmp(&a.point.y).unwrap()
+                .then_with(|| a.point.x.partial_cmp(&b.point.x).unwrap())
+        });
     }
+
+    // Funktion um einen Eintrag in der Sweepline anhand Line zu finden
+    pub fn find_line(&self, entry: Line) -> Option<&SweepLineEntry> {
+        self.segments.iter().find(|x| x.line == entry)
+    }
+
 
 
     pub fn remove_line(&mut self, entry: Line) -> SweepLineEntry {
@@ -92,10 +102,18 @@ impl SweepLine {
 
         if index > 0 {
             left = Some(&self.segments[index - 1]);
+        } else {
+            if self.segments.len() > 0 {
+                left = Some(&self.segments[self.segments.len() - 1]);
+            }
         }
 
         if index < self.segments.len() - 1 {
             right = Some(&self.segments[index + 1]);
+        } else {
+            if self.segments.len() > 0 {
+                right = Some(&self.segments[0]);
+            }
         }
 
         (left, right)
@@ -124,5 +142,25 @@ mod tests {
         // Prüfe reihenfolge
         assert_eq!(b.segments[0].point, p2);
         assert_eq!(b.segments[1].point, p1);
+    }
+
+    #[test]
+    fn test_get_neighbors() {
+        let mut b = SweepLine::new();
+        let p1 = Point::new(1.0, 1.0);
+        let p2 = Point::new(2.0, 2.0);
+        let p3 = Point::new(3.0, 3.0);
+        let l1 = Line::new(p1, p2);
+        let l2 = Line::new(p2, p3);
+        b.add_line(p1, l1);
+        b.add_line(p2, l2);
+
+        let (left, right) = b.get_neighbors(l1);
+        assert_eq!(left.unwrap().point, p2);
+        assert_eq!(right.unwrap().point, p2);
+
+        let (left, right) = b.get_neighbors(l2);
+        assert_eq!(left.unwrap().point, p1);
+        assert_eq!(right.unwrap().point, p1);
     }
 }
