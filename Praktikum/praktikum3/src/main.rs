@@ -80,6 +80,9 @@ fn main() {
     let mut intersections = Vec::new();
     
     while let Some(event) = events.pop() {
+
+        SL.pinpoint_points(event.point);
+
         match event.event_type {
             EventType::Start => {
                 SL.add_line(event.point, event.line.unwrap());
@@ -210,59 +213,59 @@ fn main() {
 
                 //////////////////////////////
                 
-                SL.add_line(event.point, event.line.unwrap());
+                // SL.add_line(event.point, event.line.unwrap());
 
-                let (above, below) = SL.get_neighbors(event.line.unwrap());
+                // let (above, below) = SL.get_neighbors(event.line.unwrap());
 
-                if let Some(above) = above {
-                    // check for intersection
-                    let intersection = event.line.unwrap().intersection(above.line);
-                    if let Some(intersection) = intersection {
-                         // Add to intersections
-                         let new_intersection = Intersection{
-                            point: intersection,
-                            line: event.line.unwrap(),
-                            other: above.line
-                        };
-                        intersections.push(new_intersection);
-                    }
-                }
+                // if let Some(above) = above {
+                //     // check for intersection
+                //     let intersection = event.line.unwrap().intersection(above.line);
+                //     if let Some(intersection) = intersection {
+                //          // Add to intersections
+                //          let new_intersection = Intersection{
+                //             point: intersection,
+                //             line: event.line.unwrap(),
+                //             other: above.line
+                //         };
+                //         intersections.push(new_intersection);
+                //     }
+                // }
 
-                // Above and below intersection
-                if let Some(above) = above {
-                    if let Some(below) = below {
-                        // check for intersection
-                        let intersection = above.line.intersection(below.line);
-                        if let Some(intersection) = intersection {
-                            let new_event = Event {
-                                point: intersection,
-                                event_type: EventType::Intersection,
-                                line: Some(above.line),
-                                other: Some(below.line)
-                            };
+                // // Above and below intersection
+                // if let Some(above) = above {
+                //     if let Some(below) = below {
+                //         // check for intersection
+                //         let intersection = above.line.intersection(below.line);
+                //         if let Some(intersection) = intersection {
+                //             let new_event = Event {
+                //                 point: intersection,
+                //                 event_type: EventType::Intersection,
+                //                 line: Some(above.line),
+                //                 other: Some(below.line)
+                //             };
 
-                            if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
-                                events.push(new_event);
-                            }
-                        }
-                    }
-                }
+                //             if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
+                //                 events.push(new_event);
+                //             }
+                //         }
+                //     }
+                // }
 
-                if let Some(below) = below {
-                    // check for intersection
-                    let intersection = event.line.unwrap().intersection(below.line);
-                    if let Some(intersection) = intersection {
-                         // Add to intersections
-                         let new_intersection = Intersection{
-                            point: intersection,
-                            line: event.line.unwrap(),
-                            other: below.line
-                        };
-                        intersections.push(new_intersection);
-                    }
-                }
+                // if let Some(below) = below {
+                //     // check for intersection
+                //     let intersection = event.line.unwrap().intersection(below.line);
+                //     if let Some(intersection) = intersection {
+                //          // Add to intersections
+                //          let new_intersection = Intersection{
+                //             point: intersection,
+                //             line: event.line.unwrap(),
+                //             other: below.line
+                //         };
+                //         intersections.push(new_intersection);
+                //     }
+                // }
                 
-                SL.remove_line(event.line.unwrap());
+                // SL.remove_line(event.line.unwrap());
 
             },
             EventType::Intersection => {
@@ -273,18 +276,18 @@ fn main() {
                 
                 };
 
-                if intersections.contains(&new_intersection) {
-                    continue;
-                }
-
-                intersections.push(new_intersection);
-
-
                 // Verify?
                 let (segE1, segE2) = SL.swap_lines(event.line.unwrap(), event.other.unwrap(), event.point);
 
                 let (segE1_above, segE1_below) = SL.get_neighbors(segE1);
                 let (segE2_above, segE2_below) = SL.get_neighbors(segE2);
+
+                
+                if intersections.contains(&new_intersection) {
+                    continue;
+                }
+
+                intersections.push(new_intersection);
 
                 // // Intersection zwischen segE1 und segE1_below
                 if let Some(segE1_below) = segE1_below {
@@ -462,6 +465,14 @@ fn read_segments_from_file(filename: &str) -> Vec<Line> {
         // Erstellung der Punkte
         let start = Point { x: x1, y: y1 };
         let end = Point { x: x2, y: y2 };
+
+        if start.x == 62.462 && start.y == 76.608 {
+            continue;
+        }
+
+        if start.x == 10.649 && start.y == 2.807 {
+            continue;
+        }
 
         // Kein Punkt
         if start == end {

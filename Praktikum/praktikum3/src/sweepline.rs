@@ -75,10 +75,11 @@ impl SweepLine {
 
         let epsilon = 1e-9;
 
-        let new_y1 = entry1.line.y(point.x + epsilon);
-        let new_entry1 = SweepLineEntry::new(Point::new(point.x, new_y1), entry1.line);
-        let new_y2 = entry2.line.y(point.x + epsilon);
-        let new_entry2 = SweepLineEntry::new(Point::new(point.x, new_y2), entry2.line);
+        let new_X = point.x + epsilon;
+        let new_y1 = entry1.line.y(new_X);
+        let new_entry1 = SweepLineEntry::new(Point::new(new_X, new_y1), entry1.line);
+        let new_y2 = entry2.line.y(new_X);
+        let new_entry2 = SweepLineEntry::new(Point::new(new_X, new_y2), entry2.line);
 
         self.segments.push(new_entry1.clone());
         self.segments.push(new_entry2.clone());
