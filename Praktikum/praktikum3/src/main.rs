@@ -48,20 +48,21 @@ fn main() {
     // ];
 
     // let file_path = "strecken/s_1000_1.dat";
-    let file_path = "strecken/s_10000_1.dat";
-    // let file_path = "strecken/s_100000_1.dat";
+    // let file_path = "strecken/s_10000_1.dat";
+    let file_path = "strecken/s_100000_1.dat";
+    // let file_path = "strecken/s_big.dat";
     let segments = read_segments_from_file(file_path);
 
     let intersectios_brute_force = check_intersections(&segments);
     println!("Brute Force Schnittpunkte: {}", intersectios_brute_force.len());
-    write_intersections_to_file(intersectios_brute_force, "brute_force_intersections.dat");
+    write_intersections_to_file(intersectios_brute_force.clone(), "brute_force_intersections.dat");
 
 
     // let segments = generate_non_parallel_line_segments(10, 0.0, 100.0, 0.0, 100.0);
 
     let mut events = BinaryHeap::new();
 
-    for item in segments {
+    for item in segments.clone() {
         events.push(Event {
             point: item.start,
             event_type: EventType::Start,
@@ -431,7 +432,82 @@ fn main() {
 
     println!("Done");
     println!("Schnittpunkte: {}", intersections.len());
-    write_intersections_to_file(intersections, "sweep_line_intersections.dat");
+    write_intersections_to_file(intersections.clone(), "sweep_line_intersections.dat");
+
+    // Sortiere nach x
+    let mut intersections = intersections;
+    intersections.sort_by(|a, b| a.point.x.partial_cmp(&b.point.x).unwrap());
+
+    // Duplikate entfernen
+    let mut set = HashSet::new();
+    intersections.retain(|e| set.insert(e.point));
+
+
+    // Sortiere nach x
+    let mut bf_intersections = intersectios_brute_force.clone();
+    bf_intersections.sort_by(|a, b| a.point.x.partial_cmp(&b.point.x).unwrap());
+
+    // Duplikate entfernen
+    let mut set = HashSet::new();
+    bf_intersections.retain(|e| set.insert(e.point));
+
+
+    // Vector mit allen Schnittpunkten gerundet
+    let mut rounded_intersections = Vec::new();
+    for intersection in intersections.clone() {
+        rounded_intersections.push(Intersection {
+            point: intersection.point.round(),
+            line: intersection.line,
+            other: intersection.other
+        });
+    }
+
+    let mut bf_rounded_intersections = Vec::new();
+    for intersection in intersectios_brute_force.clone() {
+        bf_rounded_intersections.push(Intersection {
+            point: intersection.point.round(),
+            line: intersection.line,
+            other: intersection.other
+        });
+    }
+
+    // // Fehlende Schnittpunkte von bf_rounded_intersections in rounded_intersections finden
+    // let mut missing_intersections = Vec::new();
+    // for intersection in bf_rounded_intersections {
+    //     if !rounded_intersections.contains(&intersection) {
+    //         missing_intersections.push(intersection);
+    //     }
+    // }
+
+    // Finde alle Schnittpunkte, die in bf_rounded_intersections und rounded_intersections sind
+    let mut common_intersections = Vec::new();
+    for intersection in bf_rounded_intersections {
+        if rounded_intersections.contains(&intersection) {
+            common_intersections.push(intersection);
+        }
+    }
+
+    // Ausgabe der Linie der fehlenden Schnittpunkte in File
+    let mut file = std::fs::File::create("missing_intersections.dat").expect("Could not create file");
+    for intersection in common_intersections {
+        let line = format!("{} {} {} {}\n", intersection.line.start.x, intersection.line.start.y, intersection.line.end.x, intersection.line.end.y);
+        file.write_all(line.as_bytes()).expect("Could not write to file");
+    }
+
+    let remover = read_segments_from_file("missing_intersections.dat");
+
+    // Enterne remover von segments
+    let mut segments = segments.clone();
+    for segment in remover {
+        segments.retain(|x| x != &segment);
+    }
+
+    // Write segments to file
+    let mut file = std::fs::File::create("clean_segments.dat").expect("Could not create file");
+    for segment in segments {
+        let line = format!("{} {} {} {}\n", segment.start.x, segment.start.y, segment.end.x, segment.end.y);
+        file.write_all(line.as_bytes()).expect("Could not write to file");
+    }
 
 }
 
@@ -595,7 +671,7 @@ fn write_intersections_to_file(intersections: Vec<Intersection>, filename: &str)
     println!("{} - Schnittpunkte: {}", filename, intersections.len());
 
     for intersection in intersections {
-        let line = format!("{} {}\n", intersection.point.x, intersection.point.y); //, Schnitt: Line1-Ende: {} {}; Line2-Ende: {} {}\n", intersection.point.x, intersection.point.y, intersection.line.end.x, intersection.line.end.y, intersection.other.end.x, intersection.other.end.y);
+        let line = format!("{} {}; Linie: {} {}\n", intersection.point.x.round(), intersection.point.y.round(), intersection.line.start.x, intersection.line.start.y); //, Schnitt: Line1-Ende: {} {}; Line2-Ende: {} {}\n", intersection.point.x, intersection.point.y, intersection.line.end.x, intersection.line.end.y, intersection.other.end.x, intersection.other.end.y);
         file.write_all(line.as_bytes()).expect("Could not write to file");
     }
-}
+} 

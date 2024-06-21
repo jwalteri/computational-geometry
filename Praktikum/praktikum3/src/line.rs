@@ -1,6 +1,6 @@
 use crate::point::Point;
 
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq, Copy,)]
 pub struct Line {
     pub start: Point,
     pub end: Point,
@@ -16,6 +16,11 @@ impl Line {
         let m = (self.end.y - self.start.y) / (self.end.x - self.start.x);
         let b = self.start.y - m * self.start.x;
         m * x + b
+    }
+
+    // Display
+    pub fn display(&self) {
+        println!("Start: {:?}, End: {:?}", self.start, self.end);
     }
 
     // Intersection
