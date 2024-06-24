@@ -22,6 +22,7 @@ impl Intersection {
 }
 
 // main function
+
 fn main() {
     println!("Hello, world!");
 
@@ -48,17 +49,26 @@ fn main() {
     // ];
 
     // let file_path = "strecken/s_1000_1.dat";
-    // let file_path = "strecken/s_10000_1.dat";
-    let file_path = "strecken/s_100000_1.dat";
+    //let file_path = "G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\strecken\\s_1000_1.dat";
+    // let file_path = "G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\strecken\\s_100000_1.dat";
     // let file_path = "strecken/s_big.dat";
+    let file_path = "G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\strecken\\s_1000_10.dat";
     let segments = read_segments_from_file(file_path);
 
+    // Start Zeitmessung
+    let start = std::time::Instant::now();
+
     let intersectios_brute_force = check_intersections(&segments);
+
+    // Ende Zeitmessung
+    let end = std::time::Instant::now();
+
+    println!("Brute Force Zeit: {:?}", end - start);
     println!("Brute Force Schnittpunkte: {}", intersectios_brute_force.len());
     write_intersections_to_file(intersectios_brute_force.clone(), "brute_force_intersections.dat");
 
 
-    // let segments = generate_non_parallel_line_segments(10, 0.0, 100.0, 0.0, 100.0);
+    let start = std::time::Instant::now();
 
     let mut events = BinaryHeap::new();
 
@@ -87,14 +97,6 @@ fn main() {
         match event.event_type {
             EventType::Start => {
                 SL.add_line(event.point, event.line.unwrap());
-
-                if event.point.x == 90.5472 && event.point.y == 22.7331 {
-                    println!("Startpunkt");
-                }
-
-                if event.point.x == 91.105 && event.point.y == 22.032 {
-                    println!("Startpunkt");
-                }
 
                 let (above, below) = SL.get_neighbors(event.line.unwrap());
 
@@ -125,69 +127,7 @@ fn main() {
                 }
             },
             EventType::End => {
-                // let entry = SL.find_line(event.line.unwrap()).unwrap();
-                // entry.point = event.point;
                 let (above, below) = SL.get_neighbors(event.line.unwrap());
-
-
-                if event.point.x == 91.112 && event.point.y == 22.6269 {
-                    println!("Startpunkt");
-                }
-
-                if event.point.x == 91.157 && event.point.y == 22.7331 {
-                    println!("Startpunkt");
-                }
-
-                // // event.line und above
-                // if let Some(above) = above {
-                //     // check for intersection
-                //     let intersection = event.line.unwrap().intersection(above.line);
-                //     if let Some(intersection) = intersection {
-                //         // let new_event = Event {
-                //         //     point: intersection,
-                //         //     event_type: EventType::Intersection,
-                //         //     line: event.line,
-                //         //     other: Some(above.line)
-                //         // };
-
-                //         // if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
-                //         //     events.push(new_event);
-                //         // }
-
-                //         // Add to intersections
-                //         let new_intersection = Intersection{
-                //             point: intersection,
-                //             line: event.line.unwrap(),
-                //             other: above.line
-                //         };
-                //         intersections.push(new_intersection);
-                //     }
-                // }
-
-                // // event.line und below
-                // if let Some(below) = below {
-                //     // check for intersection
-                //     let intersection = event.line.unwrap().intersection(below.line);
-                //     if let Some(intersection) = intersection {
-                //         // let new_event = Event {
-                //         //     point: intersection,
-                //         //     event_type: EventType::Intersection,
-                //         //     line: event.line,
-                //         //     other: Some(below.line)
-                //         // };
-
-                //         // if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
-                //         //     events.push(new_event);
-                //         // }
-                        //  // Add to intersections
-                        //  let new_intersection = Intersection{
-                        //     point: intersection,
-                        //     line: event.line.unwrap(),
-                        //     other: below.line
-                        // };
-                        // intersections.push(new_intersection);
-                //     }
-                // }
 
                 // Above and below intersection
                 if let Some(above) = above {
@@ -210,64 +150,6 @@ fn main() {
                 }
 
                 SL.remove_line(event.line.unwrap());
-
-
-                //////////////////////////////
-                
-                // SL.add_line(event.point, event.line.unwrap());
-
-                // let (above, below) = SL.get_neighbors(event.line.unwrap());
-
-                // if let Some(above) = above {
-                //     // check for intersection
-                //     let intersection = event.line.unwrap().intersection(above.line);
-                //     if let Some(intersection) = intersection {
-                //          // Add to intersections
-                //          let new_intersection = Intersection{
-                //             point: intersection,
-                //             line: event.line.unwrap(),
-                //             other: above.line
-                //         };
-                //         intersections.push(new_intersection);
-                //     }
-                // }
-
-                // // Above and below intersection
-                // if let Some(above) = above {
-                //     if let Some(below) = below {
-                //         // check for intersection
-                //         let intersection = above.line.intersection(below.line);
-                //         if let Some(intersection) = intersection {
-                //             let new_event = Event {
-                //                 point: intersection,
-                //                 event_type: EventType::Intersection,
-                //                 line: Some(above.line),
-                //                 other: Some(below.line)
-                //             };
-
-                //             if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
-                //                 events.push(new_event);
-                //             }
-                //         }
-                //     }
-                // }
-
-                // if let Some(below) = below {
-                //     // check for intersection
-                //     let intersection = event.line.unwrap().intersection(below.line);
-                //     if let Some(intersection) = intersection {
-                //          // Add to intersections
-                //          let new_intersection = Intersection{
-                //             point: intersection,
-                //             line: event.line.unwrap(),
-                //             other: below.line
-                //         };
-                //         intersections.push(new_intersection);
-                //     }
-                // }
-                
-                // SL.remove_line(event.line.unwrap());
-
             },
             EventType::Intersection => {
                 let new_intersection = Intersection{
@@ -354,7 +236,7 @@ fn main() {
                 }
 
                 
-                // Intersection zwischen segE2 und segE2_above
+                // // Intersection zwischen segE2 und segE2_above
                 if let Some(segE2_above) = segE2_above {
                                         
                     if segE2_above.line != segE2 {
@@ -374,140 +256,89 @@ fn main() {
                     }
                 }
 
-
-
-
-
-                // Intersection zwischen segE1_above und segE2_below
-                if let Some(segE1_above) = segE1_above {
-                    if let Some(segE2_below) = segE2_below {
-                                                               
-                        if segE1_above.line != segE2_below.line {
-                            let intersection = segE1_above.line.intersection(segE2_below.line);
-                            if let Some(intersection) = intersection {
-                                let new_event = Event {
-                                    point: intersection,
-                                    event_type: EventType::Intersection,
-                                    line: Some(segE1_above.line),
-                                    other: Some(segE2_below.line)
-                                };
-
-                                if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
-                                    events.push(new_event);
-                                }
-                            }
-                        }
-                    }
-                }
-
-
-
-                // Intersection zwischen segE1_below und segE2_above
-                if let Some(segE1_below) = segE1_below {
-                    if let Some(segE2_above) = segE2_above {
-
-                        
-                    if segE1_below.line != segE2_above.line {
-
-                        let intersection = segE1_below.line.intersection(segE2_above.line);
-                        if let Some(intersection) = intersection {
-                            let new_event = Event {
-                                point: intersection,
-                                event_type: EventType::Intersection,
-                                line: Some(segE1_below.line),
-                                other: Some(segE2_above.line)
-                            };
-
-                            if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
-                                events.push(new_event);
-                            }
-                        }
-                    }
-                    }
-                }
-
             }
         }
     }
+    // Ende Zeitmessung
+    let end = std::time::Instant::now();
 
-    println!("Done");
-    println!("Schnittpunkte: {}", intersections.len());
+    println!("Sweep Line Zeit: {:?}", end - start);
     write_intersections_to_file(intersections.clone(), "sweep_line_intersections.dat");
 
-    // Sortiere nach x
-    let mut intersections = intersections;
-    intersections.sort_by(|a, b| a.point.x.partial_cmp(&b.point.x).unwrap());
+    // // // Sortiere nach x
+    // // let mut intersections = intersections;
+    // // intersections.sort_by(|a, b| a.point.x.partial_cmp(&b.point.x).unwrap());
 
-    // Duplikate entfernen
-    let mut set = HashSet::new();
-    intersections.retain(|e| set.insert(e.point));
-
-
-    // Sortiere nach x
-    let mut bf_intersections = intersectios_brute_force.clone();
-    bf_intersections.sort_by(|a, b| a.point.x.partial_cmp(&b.point.x).unwrap());
-
-    // Duplikate entfernen
-    let mut set = HashSet::new();
-    bf_intersections.retain(|e| set.insert(e.point));
+    // // // Duplikate entfernen
+    // // let mut set = HashSet::new();
+    // // intersections.retain(|e| set.insert(e.point));
 
 
-    // Vector mit allen Schnittpunkten gerundet
-    let mut rounded_intersections = Vec::new();
-    for intersection in intersections.clone() {
-        rounded_intersections.push(Intersection {
-            point: intersection.point.round(),
-            line: intersection.line,
-            other: intersection.other
-        });
-    }
+    // // // Sortiere nach x
+    // // let mut bf_intersections = intersectios_brute_force.clone();
+    // // bf_intersections.sort_by(|a, b| a.point.x.partial_cmp(&b.point.x).unwrap());
 
-    let mut bf_rounded_intersections = Vec::new();
-    for intersection in intersectios_brute_force.clone() {
-        bf_rounded_intersections.push(Intersection {
-            point: intersection.point.round(),
-            line: intersection.line,
-            other: intersection.other
-        });
-    }
+    // // // Duplikate entfernen
+    // // let mut set = HashSet::new();
+    // // bf_intersections.retain(|e| set.insert(e.point));
 
-    // // Fehlende Schnittpunkte von bf_rounded_intersections in rounded_intersections finden
-    // let mut missing_intersections = Vec::new();
-    // for intersection in bf_rounded_intersections {
-    //     if !rounded_intersections.contains(&intersection) {
-    //         missing_intersections.push(intersection);
-    //     }
-    // }
 
-    // Finde alle Schnittpunkte, die in bf_rounded_intersections und rounded_intersections sind
-    let mut common_intersections = Vec::new();
-    for intersection in bf_rounded_intersections {
-        if rounded_intersections.contains(&intersection) {
-            common_intersections.push(intersection);
-        }
-    }
+    // // // Vector mit allen Schnittpunkten gerundet
+    // // let mut rounded_intersections = Vec::new();
+    // // for intersection in intersections.clone() {
+    // //     rounded_intersections.push(Intersection {
+    // //         point: intersection.point.round(),
+    // //         line: intersection.line,
+    // //         other: intersection.other
+    // //     });
+    // // }
 
-    // Ausgabe der Linie der fehlenden Schnittpunkte in File
-    let mut file = std::fs::File::create("missing_intersections.dat").expect("Could not create file");
-    for intersection in common_intersections {
-        let line = format!("{} {} {} {}\n", intersection.line.start.x, intersection.line.start.y, intersection.line.end.x, intersection.line.end.y);
-        file.write_all(line.as_bytes()).expect("Could not write to file");
-    }
+    // // let mut bf_rounded_intersections = Vec::new();
+    // // for intersection in intersectios_brute_force.clone() {
+    // //     bf_rounded_intersections.push(Intersection {
+    // //         point: intersection.point.round(),
+    // //         line: intersection.line,
+    // //         other: intersection.other
+    // //     });
+    // // }
 
-    let remover = read_segments_from_file("missing_intersections.dat");
+    // // // // Fehlende Schnittpunkte von bf_rounded_intersections in rounded_intersections finden
+    // // // let mut missing_intersections = Vec::new();
+    // // // for intersection in bf_rounded_intersections {
+    // // //     if !rounded_intersections.contains(&intersection) {
+    // // //         missing_intersections.push(intersection);
+    // // //     }
+    // // // }
 
-    // Enterne remover von segments
-    let mut segments = segments.clone();
-    for segment in remover {
-        segments.retain(|x| x != &segment);
-    }
+    // // // Finde alle Schnittpunkte, die in bf_rounded_intersections und rounded_intersections sind
+    // // let mut common_intersections = Vec::new();
+    // // for intersection in bf_rounded_intersections {
+    // //     if rounded_intersections.contains(&intersection) {
+    // //         common_intersections.push(intersection);
+    // //     }
+    // // }
 
-    // Write segments to file
-    let mut file = std::fs::File::create("clean_segments.dat").expect("Could not create file");
-    for segment in segments {
-        let line = format!("{} {} {} {}\n", segment.start.x, segment.start.y, segment.end.x, segment.end.y);
-        file.write_all(line.as_bytes()).expect("Could not write to file");
-    }
+    // // // Ausgabe der Linie der fehlenden Schnittpunkte in File
+    // // let mut file = std::fs::File::create("missing_intersections.dat").expect("Could not create file");
+    // // for intersection in common_intersections {
+    // //     let line = format!("{} {} {} {}\n", intersection.line.start.x, intersection.line.start.y, intersection.line.end.x, intersection.line.end.y);
+    // //     file.write_all(line.as_bytes()).expect("Could not write to file");
+    // // }
+
+    // // let remover = read_segments_from_file("missing_intersections.dat");
+
+    // // // Enterne remover von segments
+    // // let mut segments = segments.clone();
+    // // for segment in remover {
+    // //     segments.retain(|x| x != &segment);
+    // // }
+
+    // // // Write segments to file
+    // // let mut file = std::fs::File::create("clean_segments.dat").expect("Could not create file");
+    // // for segment in segments {
+    // //     let line = format!("{} {} {} {}\n", segment.start.x, segment.start.y, segment.end.x, segment.end.y);
+    // //     file.write_all(line.as_bytes()).expect("Could not write to file");
+    // // }
 
 }
 
@@ -573,15 +404,15 @@ fn read_segments_from_file(filename: &str) -> Vec<Line> {
 
     }
 
-    // extract fileName from path
-    let filename = filename.split("/").last().unwrap();
+    // // extract fileName from path
+    // let filename = filename.split("/").last().unwrap();
 
-    // safe segments to new file
-    let mut file = std::fs::File::create("strecken/clean_".to_owned() + filename).expect("Could not create file");
-    for segment in &segments {
-        let line = format!("{} {} {} {}\n", segment.start.x, segment.start.y, segment.end.x, segment.end.y);
-        file.write_all(line.as_bytes()).expect("Could not write to file");
-    }
+    // // safe segments to new file
+    // let mut file = std::fs::File::create("strecken/clean_".to_owned() + filename).expect("Could not create file");
+    // for segment in &segments {
+    //     let line = format!("{} {} {} {}\n", segment.start.x, segment.start.y, segment.end.x, segment.end.y);
+    //     file.write_all(line.as_bytes()).expect("Could not write to file");
+    // }
     
 
     segments
