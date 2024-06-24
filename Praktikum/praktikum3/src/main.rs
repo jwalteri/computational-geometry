@@ -172,89 +172,89 @@ fn main() {
 
                 intersections.push(new_intersection);
 
-                // // Intersection zwischen segE1 und segE1_below
-                if let Some(segE1_below) = segE1_below {
+                // // // Intersection zwischen segE1 und segE1_below
+                // if let Some(segE1_below) = segE1_below {
 
-                    if segE1_below.line != segE1 {
+                //     if segE1_below.line != segE1 {
 
-                        let intersection = segE1.intersection(segE1_below.line);
-                        if let Some(intersection) = intersection {
-                            let new_event = Event {
-                                point: intersection,
-                                event_type: EventType::Intersection,
-                                line: Some(segE1),
-                                other: Some(segE1_below.line)
-                            };
+                //         let intersection = segE1.intersection(segE1_below.line);
+                //         if let Some(intersection) = intersection {
+                //             let new_event = Event {
+                //                 point: intersection,
+                //                 event_type: EventType::Intersection,
+                //                 line: Some(segE1),
+                //                 other: Some(segE1_below.line)
+                //             };
 
-                            if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
-                                events.push(new_event);
-                            }
-                        }
-                    }
-                }
+                //             if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
+                //                 events.push(new_event);
+                //             }
+                //         }
+                //     }
+                // }
 
-                // Intersection zwischen segE1 und segE1_above
-                if let Some(segE1_above) = segE1_above {
+                // // Intersection zwischen segE1 und segE1_above
+                // if let Some(segE1_above) = segE1_above {
 
-                    if segE1_above.line != segE1 {
+                //     if segE1_above.line != segE1 {
 
-                        let intersection = segE1.intersection(segE1_above.line);
-                        if let Some(intersection) = intersection {
-                            let new_event = Event {
-                                point: intersection,
-                                event_type: EventType::Intersection,
-                                line: Some(segE1),
-                                other: Some(segE1_above.line)
-                            };
+                //         let intersection = segE1.intersection(segE1_above.line);
+                //         if let Some(intersection) = intersection {
+                //             let new_event = Event {
+                //                 point: intersection,
+                //                 event_type: EventType::Intersection,
+                //                 line: Some(segE1),
+                //                 other: Some(segE1_above.line)
+                //             };
 
-                            if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
-                                events.push(new_event);
-                            }
-                        }
-                    }
-                }
+                //             if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
+                //                 events.push(new_event);
+                //             }
+                //         }
+                //     }
+                // }
 
-                // Intersection zwischen segE2 und segE2_below
-                if let Some(segE2_below) = segE2_below {
+                // // Intersection zwischen segE2 und segE2_below
+                // if let Some(segE2_below) = segE2_below {
 
-                    if segE2_below.line != segE2 {
+                //     if segE2_below.line != segE2 {
 
-                        let intersection = segE2.intersection(segE2_below.line);
-                        if let Some(intersection) = intersection {
-                            let new_event = Event {
-                                point: intersection,
-                                event_type: EventType::Intersection,
-                                line: Some(segE2),
-                                other: Some(segE2_below.line)
-                            };
+                //         let intersection = segE2.intersection(segE2_below.line);
+                //         if let Some(intersection) = intersection {
+                //             let new_event = Event {
+                //                 point: intersection,
+                //                 event_type: EventType::Intersection,
+                //                 line: Some(segE2),
+                //                 other: Some(segE2_below.line)
+                //             };
 
-                            if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
-                                events.push(new_event);
-                            }
-                        } 
-                    }
-                }
+                //             if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
+                //                 events.push(new_event);
+                //             }
+                //         } 
+                //     }
+                // }
 
                 
-                // // Intersection zwischen segE2 und segE2_above
-                if let Some(segE2_above) = segE2_above {
+                // // // Intersection zwischen segE2 und segE2_above
+                // if let Some(segE2_above) = segE2_above {
                                         
-                    if segE2_above.line != segE2 {
-                        let intersection = segE2.intersection(segE2_above.line);
-                        if let Some(intersection) = intersection {
-                            let new_event = Event {
-                                point: intersection,
-                                event_type: EventType::Intersection,
-                                line: Some(segE2),
-                                other: Some(segE2_above.line)
-                            };
+                //     if segE2_above.line != segE2 {
+                //         let intersection = segE2.intersection(segE2_above.line);
+                //         if let Some(intersection) = intersection {
+                //             let new_event = Event {
+                //                 point: intersection,
+                //                 event_type: EventType::Intersection,
+                //                 line: Some(segE2),
+                //                 other: Some(segE2_above.line)
+                //             };
 
-                            if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
-                                events.push(new_event);
-                            }
-                        }
-                    }
-                }
+                //             if !contains_event(&events, &new_event) && new_event.point != event.point && new_event.line != event.other && new_event.other != event.other {
+                //                 events.push(new_event);
+                //             }
+                //         }
+                //     }
+                // }
 
             }
         }
