@@ -156,6 +156,7 @@ impl PartialOrd for Line {
     }
 }
 
+#[derive(Debug, Clone)]
 struct LineCollection {
     lines: BTreeSet<Line>,
 }
@@ -179,8 +180,7 @@ impl LineCollection {
         for line in self.lines.clone().iter() {
             let new_y = line.y(point.x);
             self.lines.remove(line);
-            self.lines.insert(Line { start: point.clone(), end: Point { x: line.end.x, y: OrderedFloat(new_y.into_inner()) }, id: line.id });
-        
+            self.lines.insert(Line { start: Point { x: point.x, y: new_y }, end: line.end.clone(), id: line.id });
         }
     }
 
@@ -199,30 +199,61 @@ impl LineCollection {
     fn find_neighbors(&self, line: &Line) -> (Option<&Line>, Option<&Line>) {
         let mut before = None;
         let mut after = None;
-        for l in self.lines.range(..line) {
+
+        // Find before with iterator
+        let mut iter = self.lines.iter();
+        while let Some(l) = iter.next() {
+            if l.id == line.id {
+                break;
+            }
             before = Some(l);
         }
-        for l in self.lines.range(line..) {
-            if l != line {
+
+        // Find after with iterator
+        let mut iter = self.lines.iter();
+
+
+        let mut found = false;
+        while let Some(l) = iter.next() {
+            if found {
                 after = Some(l);
                 break;
             }
+            if l.id == line.id {
+                found = true;
+            }
         }
+
+        // for l in self.lines.range(..line) {
+        //     before = Some(l);
+        // }
+        // for l in self.lines.range(line..) {
+        //     if l != line {
+        //         after = Some(l);
+        //         break;
+        //     }
+        // }
         (before, after)
+        
     }
 
     fn swap_lines(&mut self, line1: &Line, line2: &Line, x_value: OrderedFloat<f64>) -> (Line, Line) {
+        // Find by id
+        let collection = self.lines.clone();
+        let line1 = collection.iter().find(|x| x.id == line1.id).unwrap();
+        let line2 = collection.iter().find(|x| x.id == line2.id).unwrap();
+
         self.lines.remove(line1);
         self.lines.remove(line2);
 
-        let epsilon = 1e-6;
+        let epsilon = 1e-9;
 
         let new_X = x_value + epsilon;
         let new_y1 = line1.y(new_X);
         let new_y2 = line2.y(new_X);
 
-        let new_line1 = Line::new(Point { x: new_X, y: new_y1 }, line1.end.clone(), line1.id);
-        let new_line2 = Line::new(Point { x: new_X, y: new_y2 }, line2.end.clone(), line2.id);
+        let new_line1 = Line::new(Point { x: x_value, y: new_y1 }, line1.end.clone(), line1.id);
+        let new_line2 = Line::new(Point { x: x_value, y: new_y2 }, line2.end.clone(), line2.id);
 
         self.lines.insert(new_line1.clone());
         self.lines.insert(new_line2.clone());
@@ -324,13 +355,13 @@ fn run() -> usize {
     // let file_path = "G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\strecken\\s_5_1.dat";
     let segments = read_segments_from_file(file_path);
 
-    // let segments = vec![
-    //     Line {start:Point{x:ordered_float::OrderedFloat(91.1050),y:ordered_float::OrderedFloat(22.0320)},end:Point{x:ordered_float::OrderedFloat(91.1120),y:ordered_float::OrderedFloat(22.6269)}, id: 0 },
-    //     Line { start: Point { x: ordered_float::OrderedFloat(90.5472), y: ordered_float::OrderedFloat(22.7331) }, end: Point { x: ordered_float::OrderedFloat(91.1570), y: ordered_float::OrderedFloat(22.4220) }, id: 1},
-    //     Line { start: Point { x: ordered_float::OrderedFloat(90.7466), y: ordered_float::OrderedFloat(22.0581) }, end: Point { x: ordered_float::OrderedFloat(91.5450), y: ordered_float::OrderedFloat(21.3290) }, id: 2},
-    //     Line { start: Point { x: ordered_float::OrderedFloat(90.8549), y: ordered_float::OrderedFloat(22.0544) }, end: Point { x: ordered_float::OrderedFloat(91.2730), y: ordered_float::OrderedFloat(21.5360) }, id: 3},
-    //     Line { start: Point { x: ordered_float::OrderedFloat(90.5983), y: ordered_float::OrderedFloat(22.2864) }, end: Point { x: ordered_float::OrderedFloat(90.6610), y: ordered_float::OrderedFloat(21.9340) }, id: 4},
-    //     ];
+    let segments = vec![
+        Line {start:Point{x:ordered_float::OrderedFloat(91.1050),y:ordered_float::OrderedFloat(22.0320)},end:Point{x:ordered_float::OrderedFloat(91.1120),y:ordered_float::OrderedFloat(22.6269)}, id: 0 },
+        Line { start: Point { x: ordered_float::OrderedFloat(90.5472), y: ordered_float::OrderedFloat(22.7331) }, end: Point { x: ordered_float::OrderedFloat(91.1570), y: ordered_float::OrderedFloat(22.4220) }, id: 1},
+        Line { start: Point { x: ordered_float::OrderedFloat(90.7466), y: ordered_float::OrderedFloat(22.0581) }, end: Point { x: ordered_float::OrderedFloat(91.5450), y: ordered_float::OrderedFloat(21.3290) }, id: 2},
+        Line { start: Point { x: ordered_float::OrderedFloat(90.8549), y: ordered_float::OrderedFloat(22.0544) }, end: Point { x: ordered_float::OrderedFloat(91.2730), y: ordered_float::OrderedFloat(21.5360) }, id: 3},
+        Line { start: Point { x: ordered_float::OrderedFloat(90.5983), y: ordered_float::OrderedFloat(22.2864) }, end: Point { x: ordered_float::OrderedFloat(90.6610), y: ordered_float::OrderedFloat(21.9340) }, id: 4},
+        ];
 
     for segment in segments {
         events.insert(Event { point: segment.start.clone(), event_type: EventType::Start, line: Some(segment.clone()), other: None });
@@ -365,9 +396,11 @@ fn run() -> usize {
                         let new_event = Event { point: intersection.clone(), event_type: EventType::Intersection, line: event.line.clone(), other: Some(before.clone()) };
 
                         // Check if the event already exists
-                        if !events.contains(&new_event) && !intersections.contains(&new_intersection) {
-                            events.insert(new_event);
-                        }
+                        // if !events.contains(&new_event) && !intersections.contains(&new_intersection) {
+                        //     events.insert(new_event);
+                        // }
+
+                        events.insert(new_event);
                     }
                 }
 
@@ -380,9 +413,11 @@ fn run() -> usize {
                         let new_event = Event { point: intersection.clone(), event_type: EventType::Intersection, line: event.line.clone(), other: Some(after.clone()) };
 
                         // Check if the event already exists
-                        if !events.contains(&new_event) && !intersections.contains(&new_intersection) {
-                            events.insert(new_event);
-                        }
+                        // if !events.contains(&new_event) && !intersections.contains(&new_intersection) {
+                        //     events.insert(new_event);
+                        // }
+
+                        events.insert(new_event);
                     }
                 }
             },
@@ -411,14 +446,20 @@ fn run() -> usize {
                 // Remove the line from the sweep line
                 //sweep_line.remove_line(event.line.unwrap());
 
-                // Ausgabe sweep line
-                // for line in &sweep_line.lines {
-                //     println!("{:?}", line);
-                // }
+
 
                 // Find line by id
                 let remove_id = event.line.clone().unwrap().id;
-                println!("Remove id: {}", remove_id);
+                // println!("Remove id: {}", remove_id);
+
+                // if remove_id == 606 {
+                //     // Ausgabe sweep line
+                //     println!("Sweep Line");
+                //     for line in &sweep_line.lines {
+                //         println!("{:?}", line);
+                //     }
+                // }
+
                 let line = sweep_line.lines.iter().find(|x| x.id == remove_id).unwrap();
                 sweep_line.remove_line(line.clone());
             },
@@ -426,18 +467,33 @@ fn run() -> usize {
                 let new_intersection = Intersection { point: event.point.clone(), line: event.line.clone().unwrap(), other: event.other.clone().unwrap() };
                 intersections.push(new_intersection.clone());
 
+
+                let _index_line1 = sweep_line.lines.iter().position(|x| x.id == event.line.clone().unwrap().id).unwrap();
+                let _index_other1 = sweep_line.lines.iter().position(|x| x.id == event.other.clone().unwrap().id).unwrap();
+
+
                 // Swap lines
                 let (line, other) = sweep_line.swap_lines(&event.line.clone().unwrap(), &event.other.clone().unwrap(), event.point.x);
+
+                // index of line
+                let _index_line2 = sweep_line.lines.iter().position(|x| x.id == line.id).unwrap();
+                let _index_other2 = sweep_line.lines.iter().position(|x| x.id == other.id).unwrap();
+
+                // let line = event.line.clone().unwrap();
+                // let other = event.other.clone().unwrap();
 
                 // Find the neighbors
                 let (line_before, line_after) = sweep_line.find_neighbors(&line);
                 let (other_before, other_after) = sweep_line.find_neighbors(&other);
 
+                // let line_before = line_after;
+                // let other_after = other_before;
+
                 // Check for intersection between line and line_before
                 if let Some(line_before) = line_before {
                     if let Some(intersection) = line.intersection(line_before) {
-                        let new_intersection = Intersection { point: intersection.clone(), line: line.clone(), other: line_before.clone() };
-                        intersections.push(new_intersection.clone());
+                        // let new_intersection = Intersection { point: intersection.clone(), line: line.clone(), other: line_before.clone() };
+                        // intersections.push(new_intersection.clone());
 
                         // Create new event
                         let new_event = Event { point: intersection.clone(), event_type: EventType::Intersection, line: Some(line.clone()), other: Some(line_before.clone()) };
@@ -452,8 +508,8 @@ fn run() -> usize {
                 // Check for intersection between other and other_after
                 if let Some(other_after) = other_after {
                     if let Some(intersection) = other.intersection(other_after) {
-                        let new_intersection = Intersection { point: intersection.clone(), line: other.clone(), other: other_after.clone() };
-                        intersections.push(new_intersection.clone());
+                        // let new_intersection = Intersection { point: intersection.clone(), line: other.clone(), other: other_after.clone() };
+                        // intersections.push(new_intersection.clone());
 
                         // Create new event
                         let new_event = Event { point: intersection.clone(), event_type: EventType::Intersection, line: Some(other.clone()), other: Some(other_after.clone()) };
@@ -494,6 +550,8 @@ fn run() -> usize {
 // Unit test
 #[cfg(test)]
 mod tests {
+    use crate::sweepline;
+
     use super::*;
 
     #[test]
@@ -629,6 +687,111 @@ mod tests {
         assert_eq!(iter.next().unwrap().point, p3);
 
 
+    }
+
+    #[test]
+    fn test_reihenfolge_nach_swap() {
+        let mut collection = LineCollection::new();
+        let line1 = Line { start: Point { x: OrderedFloat(1.0), y: OrderedFloat(3.0) }, end: Point { x: OrderedFloat(3.0), y: OrderedFloat(4.0) }, id: 0};
+        let line2 = Line { start: Point { x: OrderedFloat(0.0), y: OrderedFloat(0.0) }, end: Point { x: OrderedFloat(4.0), y: OrderedFloat(1.0) }, id: 1};
+        let line3 = Line { start: Point { x: OrderedFloat(2.5), y: OrderedFloat(2.0) }, end: Point { x: OrderedFloat(3.0), y: OrderedFloat(4.75) }, id: 2};
+        let line4 = Line { start: Point { x: OrderedFloat(2.5), y: OrderedFloat(5.5) }, end: Point { x: OrderedFloat(4.5), y: OrderedFloat(3.0) }, id: 3};
+        let line5 = Line { start: Point { x: OrderedFloat(2.75), y: OrderedFloat(3.0) }, end: Point { x: OrderedFloat(4.5), y: OrderedFloat(4.0) }, id: 4};
+    
+        collection.add_line(line3.clone());
+        collection.add_line(line1.clone());
+        collection.add_line(line4.clone());
+        collection.add_line(line2.clone());
+        collection.add_line(line5.clone());
+
+        // collection.update_lines(Point { x: OrderedFloat(2.833), y: OrderedFloat(3.833) });
+
+        // Get the first line
+        let mut copy = collection.clone();
+        let first = copy.lines.iter().next().unwrap();
+        let second = copy.lines.iter().skip(1).next().unwrap();
+        let third = copy.lines.iter().skip(2).next().unwrap();
+        let fourth = copy.lines.iter().skip(3).next().unwrap();
+        let five = copy.lines.iter().skip(4).next().unwrap();
+
+        assert_eq!(first.id, 1);
+        assert_eq!(second.id, 2);
+        assert_eq!(third.id, 0);
+        assert_eq!(fourth.id, 4);
+        assert_eq!(five.id, 3);
+
+        collection.update_lines(Point { x: OrderedFloat(2.84), y: OrderedFloat(3.833) });
+
+        assert_eq!(first.id, 1);
+        assert_eq!(second.id, 2);
+        assert_eq!(third.id, 0);
+        assert_eq!(fourth.id, 4);
+        assert_eq!(five.id, 3);
+
+        // Ausgabe mit iterator
+        collection.lines.iter().for_each(|x| println!("{:?}", x));
+
+        // Nachbarn von second
+        let (before, after) = collection.find_neighbors(&second);
+
+        assert_eq!(before.unwrap().id, 4);
+        assert_eq!(after.unwrap().id, 0);
+
+        // Nachbarn von third
+        let (before, after) = collection.find_neighbors(&third);
+
+        assert_eq!(before.unwrap().id, 2);
+        assert_eq!(after.unwrap().id, 3);
+
+
+        println!("-------------------\n");
+
+        let (_, _) = collection.swap_lines(&second, &third, OrderedFloat(2.851));
+
+        // Ausgabe mit iterator
+        collection.lines.iter().for_each(|x| println!("{:?}", x));
+
+        println!("-------------------\n");
+
+        let first = collection.lines.iter().next().unwrap();
+        let second = collection.lines.iter().skip(1).next().unwrap();
+        let third = collection.lines.iter().skip(2).next().unwrap();
+        let fourth = collection.lines.iter().skip(3).next().unwrap();
+        let five = collection.lines.iter().skip(4).next().unwrap();
+
+        assert_eq!(first.id, 1);
+        assert_eq!(second.id, 4);
+        assert_eq!(third.id, 0);
+        assert_eq!(fourth.id, 2);
+        assert_eq!(five.id, 3);
+
+        // Nachbarn von second
+        let (before, after) = collection.find_neighbors(&fourth);
+
+        assert_eq!(before.unwrap().id, 0);
+        assert_eq!(after.unwrap().id, 3);
+
+        // Nachbarn von third
+        let (before, after) = collection.find_neighbors(&third);
+
+        assert_eq!(before.unwrap().id, 4);
+        assert_eq!(after.unwrap().id, 2);
+
+        
+        // for line in &collection.lines {
+        //     println!("{:?}\n", line);
+        // }
+
+        // println!("-------------------\n");
+        // println!("{:?}\n", first);
+        // println!("{:?}\n", second);
+        // println!("{:?}\n", third);
+        // println!("{:?}\n", fourth);
+
+        // assert_eq!(first.id, 2);
+        // assert_eq!(second.id, 2);
+        // assert_eq!(third.id, 1);
+        // assert_eq!(fourth.id, 3);
     }
 
     #[test]
