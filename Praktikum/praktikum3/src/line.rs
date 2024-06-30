@@ -1,55 +1,86 @@
 use crate::point::Point;
 
-#[derive(Debug, Clone, PartialEq, Copy,)]
+
+#[derive(Debug, Clone)]
 pub struct Line {
     pub start: Point,
     pub end: Point,
 }
 
+impl Eq for Line {}
+
+impl PartialEq for Line {
+    fn eq(&self, other: &Self) -> bool {
+        self.start == other.start && self.end == other.end
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SortableLine {
+    pub line: Line,
+    pub index: f64,
+}
+
+impl PartialEq for SortableLine {
+    fn eq(&self, other: &Self) -> bool {
+        self.index == other.index
+    }
+}
+impl Eq for SortableLine {}
+
+impl PartialOrd for SortableLine {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+                other.index.partial_cmp(&self.index)
+    }
+}
+
+impl Ord for SortableLine {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        f64::total_cmp(&other.index, &self.index)
+    }
+}
+
+fn ccw(p: &Point, q: &Point, r: &Point) -> f64 {
+    (p.x * q.y - p.y * q.x) + (q.x * r.y - q.y * r.x) + (p.y * r.x - p.x * r.y)
+}
+
 impl Line {
-    pub fn new(start: Point, end: Point) -> Line {
-        Line { start: start, end: end }
+    pub fn len(&self) -> f64 {
+        let dx = self.start.x - self.end.x;
+        let dy = self.start.y - self.end.y;
+        f64::sqrt(dx * dx + dy * dy)
     }
 
-    // Funktion um y zu berechnen mit x Wert
-    pub fn y(&self, x: f64) -> f64 {
-        let m = (self.end.y - self.start.y) / (self.end.x - self.start.x);
-        let b = self.start.y - m * self.start.x;
-        m * x + b
-    }
+    pub fn intersection(&self, other: &Line) -> Option<Point> {
+        let p1 = &self.start;
+        let p2 = &self.end;
+        let q1 = &other.start;
+        let q2 = &other.end;
 
-    // Display
-    pub fn display(&self) {
-        println!("Start: {:?}, End: {:?}", self.start, self.end);
-    }
-
-    // Intersection
-    pub fn intersection(&self, other: Line) -> Option<Point> {
-        let x1 = self.start.x;
-        let y1 = self.start.y;
-        let x2 = self.end.x;
-        let y2 = self.end.y;
-
-        let x3 = other.start.x;
-        let y3 = other.start.y;
-        let x4 = other.end.x;
-        let y4 = other.end.y;
-
-        let d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-
-        if d == 0.0 {
+        let ccwq1 = ccw(p1, p2, q1);
+        let ccwq2 = ccw(p1, p2, q2);
+        if ccwq1 * ccwq2 > 0.0 {
             return None;
         }
 
-        let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / d;
-        let u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / d;
-
-        if t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0 {
-            let x = x1 + t * (x2 - x1);
-            let y = y1 + t * (y2 - y1);
-            Some(Point::new(x, y))
-        } else {
-            None
+        let ccwp1 = ccw(q1, q2, p1);
+        let ccwp2 = ccw(q1, q2, p2);
+        if ccwp1 * ccwp2 > 0.0 {
+            return None;
         }
+
+        let r_ab = (ccwq2 / ccwq1).abs();
+        let a = r_ab / (r_ab + 1.0);
+        let i_x = q2.x + a * (q1.x - q2.x);
+        let i_y = q2.y + a * (q1.y - q2.y);
+
+        Some(Point { x: i_x, y: i_y })
+    }
+
+    // Updaten der y-Koordinate abhängig von einem X
+    pub fn y(&self, x: f64) -> f64 {
+       let m = (self.start.y - self.end.y) / (self.start.x - self.end.x);
+
+        m * (x - self.start.x) + self.start.y
     }
 }

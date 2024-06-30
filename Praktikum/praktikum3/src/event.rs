@@ -1,6 +1,6 @@
 use crate::{line::Line, point::Point};
 
-
+#[derive(Debug, Clone)]
 pub struct Event {
     pub point: Point,
     pub event_type: EventType,
@@ -8,6 +8,7 @@ pub struct Event {
     pub other: Option<Line>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Copy)]
 pub enum EventType {
     Start,
     End,
@@ -25,68 +26,30 @@ impl Event {
     }
 }
 
-impl std::cmp::PartialOrd for Event {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        // Ordne nach x-Koordinate aufsteigend
-        if self.point.x < other.point.x {
-            Some(std::cmp::Ordering::Greater)//Less
-        } else if self.point.x > other.point.x {
-            Some(std::cmp::Ordering::Less)//Greater
-        } else {
-            Some(std::cmp::Ordering::Equal)
-        }
-    }
-}
-
-
-impl Ord for Event {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        if self.point.x < other.point.x {
-            std::cmp::Ordering::Greater//Less
-        } else if self.point.x > other.point.x {
-            std::cmp::Ordering::Less//Greater
-        } else {
-            std::cmp::Ordering::Equal
-        }
-    }
-}
-
-impl Eq for Event {}
-
 impl PartialEq for Event {
     fn eq(&self, other: &Self) -> bool {
         self.point == other.point
     }
 }
 
+impl Eq for Event {}
 
+impl PartialOrd for Event {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
 
-// Unit Test
-#[cfg(test)]
-mod tests {
-    use std::collections::BinaryHeap;
-
-    use super::*;
-
-    #[test]
-    fn test_event() {
-        let p1 = Point::new(1.0, 1.0);
-        let p2 = Point::new(2.0, 1.0);
-        let p3 = Point::new(3.0, 1.0);
-        let l1 = Line::new(Point::new(1.0, 1.0), Point::new(2.0, 2.0));
-        let l2 = Line::new(Point::new(2.0, 2.0), Point::new(3.0, 3.0));
-        let l3 = Line::new(Point::new(2.0, 2.0), Point::new(3.0, 3.0));
-        let e1 = Event::new(p3, EventType::Start, Some(l1), None);
-        let e2 = Event::new(p2, EventType::Start, Some(l2), None);
-        let e3 = Event::new(p1, EventType::Start, Some(l3), None);
-
-        let mut events = BinaryHeap::new();
-        events.push(e3);
-        events.push(e1);
-        events.push(e2);
-
-        assert_eq!(events.pop().unwrap().point, p1);
-        assert_eq!(events.pop().unwrap().point, p2);
-        assert_eq!(events.pop().unwrap().point, p3);
+impl Ord for Event {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let point_cmp = self.point.cmp(&other.point);
+        match point_cmp {
+            std::cmp::Ordering::Equal => match (self.event_type, other.event_type) {
+                (EventType::Intersection { .. }, _) => std::cmp::Ordering::Less,
+                (EventType::End { .. }, _) => std::cmp::Ordering::Greater,
+                _ => std::cmp::Ordering::Equal,
+            },
+            _ => point_cmp,
+        }
     }
 }

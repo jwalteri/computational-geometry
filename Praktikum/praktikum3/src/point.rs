@@ -1,34 +1,42 @@
-use std::hash::Hasher;
-use std::hash::Hash;
-
-
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Point {
     pub x: f64,
     pub y: f64,
 }
 
+fn round(x: f64, decimals: u32) -> f64 {
+    let y = 10i32.pow(decimals) as f64;
+    (x * y).round() / y
+}
+
 impl Point {
-    pub fn new(x: f64, y: f64) -> Point {
-        Point { x: x, y: y }
+    pub fn round(&self, decimals: u32) -> Point {
+        Point {
+            x: round(self.x, decimals),
+            y: round(self.y, decimals),
+        }
     }
 
-    // Korrdinaten auf 5 Kommastellen runden
-    pub fn round(&self) -> Point {
-        Point {
-            x: (self.x * 100000.0).round() / 100000.0,
-            y: (self.y * 100000.0).round() / 100000.0,
+    pub fn round_coordinates(x: f64, decimals: u32) -> f64 {
+        let y = 10i32.pow(decimals) as f64;
+        (x * y).round() / y
+    }
+}
+
+impl Eq for Point {}
+
+impl Ord for Point {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let x = f64::total_cmp(&self.x, &other.x);
+        match x {
+            std::cmp::Ordering::Equal => f64::total_cmp(&self.y, &other.y),
+            _ => x,
         }
     }
 }
 
-// Eq für Point implementieren
-impl Eq for Point {}
-
-// Hash für Point implementieren
-impl Hash for Point {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.x.to_bits().hash(state);
-        self.y.to_bits().hash(state);
+impl PartialOrd for Point {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }

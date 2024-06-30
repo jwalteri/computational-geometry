@@ -1,167 +1,100 @@
-use crate::{line::Line, point::Point};
+use std::collections::BTreeSet;
 
+use crate::{line::{Line, SortableLine}, point::Point};
 
 pub struct SweepLine {
-    pub segments: Vec<SweepLineEntry>,
-}
-
-#[derive(Debug, Clone)]
-pub struct SweepLineEntry {
-    pub line: Line,
-    pub point: Point,
-}
-
-impl SweepLineEntry {
-    pub fn new(point: Point, line: Line) -> SweepLineEntry {
-        SweepLineEntry {
-            line: line,
-            point: point,
-        }
-    }
+    pub segments: BTreeSet<SortableLine> 
 }
 
 impl SweepLine {
-    pub fn new() -> SweepLine {
-        SweepLine {
-            segments: Vec::new(),
-        }
+    pub fn new() -> Self {
+        Self {
+            segments: BTreeSet::<SortableLine>::new()
+        } 
     }
 
-    pub fn add_line(&mut self, point: Point, entry: Line) {
-        let new_entry = SweepLineEntry::new(point, entry);
-        self.segments.push(new_entry);
-        self.sort_y();
+    pub fn insert(&mut self, y: f64, line: Line) {
+        self.segments.insert(SortableLine {line: line, index: y});
     }
 
-    pub fn sort_y(&mut self) {
-        // Sort the segments by their points y-coordinate. biggest y-coordinate first
-        //self.segments.sort_by(|a, b| b.point.y.partial_cmp(&a.point.y).unwrap());
-        self.segments.sort_by(|a, b| {
-            b.point.y.partial_cmp(&a.point.y).unwrap()
-                .then_with(|| a.point.x.partial_cmp(&b.point.x).unwrap())
-        });
+    pub fn remove(&mut self, line: &SortableLine) {
+
+        self.segments.remove(line); 
     }
 
-    // Funktion um einen Eintrag in der Sweepline anhand Line zu finden
-    pub fn find_line(&self, entry: Line) -> Option<&SweepLineEntry> {
-        self.segments.iter().find(|x| x.line == entry)
+    pub fn remove_by_line(&mut self, line: &Line) {
+        let copy = self.segments.clone();
+        let element = copy.iter().find(|x| x.line == *line).unwrap();
+
+        self.segments.remove(element); 
     }
 
-
-
-    pub fn remove_line(&mut self, entry: Line) -> SweepLineEntry {
-        let index = self.segments.iter().position(|x| x.line == entry).unwrap();
-        self.segments.remove(index)
-    }
-
-    pub fn pinpoint_points(&mut self, point: Point) {
-        let x_value = point.x;
-
-        let mut new_sweep_line = Vec::new();
-
-        // Update all y-values of the segments
-        for segment in &self.segments {
-            let y_value = segment.line.y(x_value);
-            new_sweep_line.push(SweepLineEntry::new(Point::new(x_value, y_value), segment.line));
+    pub fn update(&mut self, x: f64) {
+        let mut tmp = BTreeSet::new();
+        for line in self.segments.iter() {
+            let mut new_line = line.clone();
+            new_line.index = new_line.line.y(x);
+            tmp.insert(new_line);
         }
 
-        self.segments = new_sweep_line;
-        self.sort_y();
-    } 
-
-    pub fn swap_lines(&mut self, line1: Line, line2: Line, point: Point) -> (Line, Line) {
-        let entry1 = self.remove_line(line1);
-        let entry2 = self.remove_line(line2);
-
-        let epsilon = 1e-9;
-
-        let new_X = point.x + epsilon;
-        let new_y1 = entry1.line.y(new_X);
-        let new_entry1 = SweepLineEntry::new(Point::new(new_X, new_y1), entry1.line);
-        let new_y2 = entry2.line.y(new_X);
-        let new_entry2 = SweepLineEntry::new(Point::new(new_X, new_y2), entry2.line);
-
-        self.segments.push(new_entry1.clone());
-        self.segments.push(new_entry2.clone());
-        self.sort_y();
-        
-        // Return the highest y-value first
-        // if new_entry1.point.y > new_entry2.point.y {
-        //     return (new_entry1.line, new_entry2.line)
-        // } else {
-        //     return (new_entry2.line, new_entry1.line)
-        // }
-
-        (new_entry1.line, new_entry2.line)
+        self.segments = tmp;
     }
 
-    // Get neighbors
-    pub fn get_neighbors(&self, line: Line) -> (Option<&SweepLineEntry>, Option<&SweepLineEntry>) {
-        let index = self.segments.iter().position(|x| x.line == line).unwrap();
-        let mut left = None;
-        let mut right = None;
-
-        if index > 0 {
-            left = Some(&self.segments[index - 1]);
-        } else {
-            if self.segments.len() > 0 {
-                left = Some(&self.segments[self.segments.len() - 1]);
+    pub fn get_neighbors(&self, line: &Line) -> (Option<SortableLine>, Option<SortableLine>) { 
+        let mut tmp = self.segments.iter();
+        let mut below = None;
+        let mut above = None;
+        let mut found = false;
+        while let Some(segment) = tmp.next() {
+            if found {
+                //above = Some(segment.clone());
+                below = Some(segment.clone());
+                break;
+            }
+            if segment.line == *line {
+                found = true;
+            } else {
+                //below = Some(segment.clone());
+                above = Some(segment.clone());
             }
         }
-
-        if index < self.segments.len() - 1 {
-            right = Some(&self.segments[index + 1]);
-        } else {
-            if self.segments.len() > 0 {
-                right = Some(&self.segments[0]);
-            }
-        }
-
-        (left, right)
-    }
-}
-
-
-// Unit Test
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_sweepline() {
-        let mut b = SweepLine::new();
-        let p1 = Point::new(1.0, 1.0);
-        let p2 = Point::new(2.0, 2.0);
-        let p3 = Point::new(3.0, 3.0);
-        let l1 = Line::new(p1, p2);
-        let l2 = Line::new(p2, p3);
-        b.add_line(p1, l1);
-        b.add_line(p2, l2);
-
-        assert_eq!(b.segments.len(), 2);
-        
-        // Prüfe reihenfolge
-        assert_eq!(b.segments[0].point, p2);
-        assert_eq!(b.segments[1].point, p1);
+        (below, above)
     }
 
-    #[test]
-    fn test_get_neighbors() {
-        let mut b = SweepLine::new();
-        let p1 = Point::new(1.0, 1.0);
-        let p2 = Point::new(2.0, 2.0);
-        let p3 = Point::new(3.0, 3.0);
-        let l1 = Line::new(p1, p2);
-        let l2 = Line::new(p2, p3);
-        b.add_line(p1, l1);
-        b.add_line(p2, l2);
+    pub fn swap(
+        &mut self,
+        line1: &Line,
+        line2: &Line,
+        intersection_point: &Point,
+    ) -> (Option<SortableLine>, SortableLine, SortableLine, Option<SortableLine>) {
+        let copy = self.segments.clone();
+        let l1 = copy.iter().find(|x| x.line == *line1).unwrap();
+        let l2 = copy.iter().find(|x| x.line == *line2).unwrap();
 
-        let (left, right) = b.get_neighbors(l1);
-        assert_eq!(left.unwrap().point, p2);
-        assert_eq!(right.unwrap().point, p2);
+        // Hinweis: Delta auf x rechnen! Das is es!
+        let delta = 1e-9;
 
-        let (left, right) = b.get_neighbors(l2);
-        assert_eq!(left.unwrap().point, p1);
-        assert_eq!(right.unwrap().point, p1);
+        self.remove(l1);
+        self.remove(l2);
+
+        let mut l1 = l1.clone();
+        let mut l2 = l2.clone();
+        l1.index = line1.y(intersection_point.x + delta);
+        l2.index = line2.y(intersection_point.x + delta);
+
+        self.segments.insert(l1.clone());
+        self.segments.insert(l2.clone());
+
+        let smaller = l1.index.min(l2.index);
+        let bigger = l1.index.max(l2.index);
+
+        let copy = self.segments.clone();        
+        let smaller = copy.iter().find(|x| x.index == smaller).unwrap();
+        let bigger = copy.iter().find(|x| x.index == bigger).unwrap();
+
+        let (below, _) = self.get_neighbors(&smaller.line);
+        let (_, above) = self.get_neighbors(&bigger.line);
+
+        (below, smaller.clone(), bigger.clone(), above)
     }
 }
