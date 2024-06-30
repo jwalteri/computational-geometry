@@ -1,112 +1,124 @@
 
-use std::{collections::BTreeSet, fs::File, io::{self, BufRead, BufReader, Write}, time::Instant};
+use std::{collections::BTreeSet, time::Instant};
 
 use praktikum3::{event::{Event, EventType}, line::Line, point::Point, sweepline::SweepLine};
 
 fn main() {
 
-    //let segments = read_segments_from_file(r"G:\Git\computational-geometry\Praktikum\praktikum3\strecken\s_1000_10.dat");
-    //let segments = read_segments_from_file(r"G:\Git\computational-geometry\Praktikum\praktikum3\src\testfiles\gen_10000_10.dat");
-    let segments = read_segments_from_file(r"G:\Git\cg-3-sweep-line\data\jw_1000_10.txt");
+    let file_paths = vec![
+        "G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\strecken\\s_1000_10.dat",
+        r"G:\Git\computational-geometry\Praktikum\praktikum3\src\testfiles\jw_1000_10.txt",
+        r"G:\Git\computational-geometry\Praktikum\praktikum3\src\testfiles\jw_10000_10.txt",
+        r"G:\Git\computational-geometry\Praktikum\praktikum3\src\testfiles\jw_100000_10.txt",
+        "G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\strecken\\s_1000_1.dat",
 
-    let start_brute = Instant::now();
-    let intersections = brute_force(&segments);
-    let brute = start_brute.elapsed();
-    println!("Anzahl der Schnittpunkte: {}", intersections.len());
-    println!("Brute Force Zeit: {:?}", brute);
+    ];
 
-    let mut events: BTreeSet<Event> = BTreeSet::new();
-    let mut intersection_points: BTreeSet<Point> = BTreeSet::new();
+    // let segments = read_segments_from_file(r"G:\Git\computational-geometry\Praktikum\praktikum3\strecken\s_1000_10.dat");
+    // let segments = read_segments_from_file(r"G:\Git\cg-3-sweep-line\data\jw_1000_10.txt");
+
+    for file_path in file_paths {
+        println!("File: {}", file_path);
+        let segments = read_segments_from_file(file_path);
+
+        let start_brute = Instant::now();
+        let intersections = brute_force(&segments);
+        let brute = start_brute.elapsed();
+        println!("Anzahl der Schnittpunkte: {}", intersections.len());
+        println!("Brute Force Zeit: {:?}", brute);
+
+        let mut events: BTreeSet<Event> = BTreeSet::new();
+        let mut intersection_points: BTreeSet<Point> = BTreeSet::new();
 
 
 
-    for item in segments.clone() {
-        events.insert(Event {
-            point: item.clone().start,
-            event_type: EventType::Start,
-            line: Some(item.clone()),
-            other: None
-        });
-        events.insert(Event {
-            point: item.clone().end,
-            event_type: EventType::End,
-            line: Some(item),
-            other: None
-        });
-    }
-
-    let start_sweep = Instant::now();
-
-    let mut sweep_line = SweepLine::new();
-
-        while let Some(event) = events.pop_first() {
-            sweep_line.update(event.point.x);
-            match event.event_type {
-                EventType::Start => {
-
-                    let line = event.line.unwrap();
-                    sweep_line.insert(event.point.y, line.clone());
-
-                    let (below, above) = sweep_line.get_neighbors(&line.clone());
-
-                    if let Some(line_above) = above {
-                        if let Some(intersection_point) = line.intersection(&line_above.line) {
-                            add_event(intersection_point, &line, &line_above.line, &mut events, &mut intersection_points)
-                        };
-                    };
-
-                    if let Some(line_below) = below {
-                        if let Some(intersection_point) = line.intersection(&line_below.line) {
-                            add_event(intersection_point, &line, &line_below.line, &mut events, &mut intersection_points)
-                        };
-                    };
-                }
-                EventType::End => {
-                    let line = event.line.unwrap();
-                    let (below, above) = sweep_line.get_neighbors(&line);
-
-                    if let (Some(line_below), Some(line_above)) = (below, above)
-                    {
-                        if let Some(intersection_point) = line_below.line.intersection(&line_above.line) {
-                            add_event(intersection_point, &line_below.line, &line_above.line, &mut events, &mut intersection_points)
-                        };
-                    };
-
-                    sweep_line.remove_by_line(&line);
-                }
-                EventType::Intersection => {
-                    let line = event.line.unwrap();
-                    let other_line = event.other.unwrap();
-                    let intersection_point = event.point;
-
-                    let (below, smaller, bigger, above) = sweep_line.swap(
-                        &line,
-                        &other_line,
-                        &intersection_point,
-                    );
-                    
-
-                    if let (line, Some(line_above)) = (bigger, above) {
-                        if let Some(intersection_point) = line.line.intersection(&line_above.line) {
-                            add_event(intersection_point, &line.line, &line_above.line, &mut events, &mut intersection_points)
-                        };
-                    };
-
-                    if let (line, Some(line_below)) = (smaller, below) {
-                        if let Some(intersection_point) = line.line.intersection(&line_below.line) {
-                            add_event(intersection_point, &line.line, &line_below.line, &mut events, &mut intersection_points)
-                        };
-                    };
-
-                }
-            };
+        for item in segments.clone() {
+            events.insert(Event {
+                point: item.clone().start,
+                event_type: EventType::Start,
+                line: Some(item.clone()),
+                other: None
+            });
+            events.insert(Event {
+                point: item.clone().end,
+                event_type: EventType::End,
+                line: Some(item),
+                other: None
+            });
         }
 
-    let swept = start_sweep.elapsed();
+        let start_sweep = Instant::now();
 
-    println!("Anzahl der Schnittpunkte: {}", intersection_points.len());
-    println!("SweepLine Zeit: {:?}", swept);
-    
+        let mut sweep_line = SweepLine::new();
+
+            while let Some(event) = events.pop_first() {
+                sweep_line.update(event.point.x);
+                match event.event_type {
+                    EventType::Start => {
+
+                        let line = event.line.unwrap();
+                        sweep_line.insert(event.point.y, line.clone());
+
+                        let (below, above) = sweep_line.get_neighbors(&line.clone());
+
+                        if let Some(line_above) = above {
+                            if let Some(intersection_point) = line.intersection(&line_above.line) {
+                                add_event(intersection_point, &line, &line_above.line, &mut events, &mut intersection_points)
+                            };
+                        };
+
+                        if let Some(line_below) = below {
+                            if let Some(intersection_point) = line.intersection(&line_below.line) {
+                                add_event(intersection_point, &line, &line_below.line, &mut events, &mut intersection_points)
+                            };
+                        };
+                    }
+                    EventType::End => {
+                        let line = event.line.unwrap();
+                        let (below, above) = sweep_line.get_neighbors(&line);
+
+                        if let (Some(line_below), Some(line_above)) = (below, above)
+                        {
+                            if let Some(intersection_point) = line_below.line.intersection(&line_above.line) {
+                                add_event(intersection_point, &line_below.line, &line_above.line, &mut events, &mut intersection_points)
+                            };
+                        };
+
+                        sweep_line.remove_by_line(&line);
+                    }
+                    EventType::Intersection => {
+                        let line = event.line.unwrap();
+                        let other_line = event.other.unwrap();
+                        let intersection_point = event.point;
+
+                        let (below, lower, higher, above) = sweep_line.swap(
+                            &line,
+                            &other_line,
+                            &intersection_point,
+                        );
+                        
+
+                        if let (line, Some(line_above)) = (higher, above) {
+                            if let Some(intersection_point) = line.line.intersection(&line_above.line) {
+                                add_event(intersection_point, &line.line, &line_above.line, &mut events, &mut intersection_points)
+                            };
+                        };
+
+                        if let (line, Some(line_below)) = (lower, below) {
+                            if let Some(intersection_point) = line.line.intersection(&line_below.line) {
+                                add_event(intersection_point, &line.line, &line_below.line, &mut events, &mut intersection_points)
+                            };
+                        };
+
+                    }
+                };
+            }
+
+        let swept = start_sweep.elapsed();
+
+        println!("Anzahl der Schnittpunkte: {}", intersection_points.len());
+        println!("SweepLine Zeit: {:?}", swept);
+    }  
 }
 
 fn add_event(intersection_point: Point, line: &Line, other_line: &Line, events: &mut BTreeSet<Event>, intersection_points: &mut BTreeSet<Point>) {

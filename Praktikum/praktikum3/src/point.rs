@@ -17,9 +17,8 @@ impl Point {
         }
     }
 
-    pub fn round_coordinates(x: f64, decimals: u32) -> f64 {
-        let y = 10i32.pow(decimals) as f64;
-        (x * y).round() / y
+    pub fn new(x: f64, y: f64) -> Point {
+        Point { x, y }
     }
 }
 

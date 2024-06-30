@@ -45,11 +45,6 @@ fn ccw(p: &Point, q: &Point, r: &Point) -> f64 {
 }
 
 impl Line {
-    pub fn len(&self) -> f64 {
-        let dx = self.start.x - self.end.x;
-        let dy = self.start.y - self.end.y;
-        f64::sqrt(dx * dx + dy * dy)
-    }
 
     pub fn intersection(&self, other: &Line) -> Option<Point> {
         let p1 = &self.start;
@@ -57,20 +52,39 @@ impl Line {
         let q1 = &other.start;
         let q2 = &other.end;
 
-        let ccwq1 = ccw(p1, p2, q1);
-        let ccwq2 = ccw(p1, p2, q2);
-        if ccwq1 * ccwq2 > 0.0 {
+        // Orientierung von q1 zu Linie p1p2
+        let q1_to_p1p2 = ccw(p1, p2, q1);
+
+        // Orientierung von q2 zu Linie p1p2
+        let q2_to_p1p2 = ccw(p1, p2, q2);
+
+        // Wenn beide Orientierungen das gleiche Vorzeichen haben,
+        // dann liegen q1 und q2 auf der gleichen Seite der Linie p1p2
+        // => Die Linien können sich nicht schneiden
+        if q1_to_p1p2 * q2_to_p1p2 > 0.0 {
             return None;
         }
 
-        let ccwp1 = ccw(q1, q2, p1);
-        let ccwp2 = ccw(q1, q2, p2);
-        if ccwp1 * ccwp2 > 0.0 {
+        // Orientierung von p1 zu Linie q1q2
+        let p1_to_q1q2 = ccw(q1, q2, p1);
+
+        // Orientierung von p2 zu Linie q1q2
+        let p2_to_q1q2 = ccw(q1, q2, p2);
+
+        // Gleiches Prinzip wie oben
+        if p1_to_q1q2 * p2_to_q1q2 > 0.0 {
             return None;
         }
 
-        let r_ab = (ccwq2 / ccwq1).abs();
-        let a = r_ab / (r_ab + 1.0);
+        // Verhältnis CCW-Werte
+        // -> Bestimmt Anteil der Strecke q1q2 für Schnittpunktberechnung
+        let ratio = (q2_to_p1p2 / q1_to_p1p2).abs();
+
+        // Faktor a für Berechnung des Schnittpunktes
+        // Normalisiert ratio auf 0..1
+        let a = ratio / (ratio + 1.0);
+
+        // Berechnung des Schnittpunktes
         let i_x = q2.x + a * (q1.x - q2.x);
         let i_y = q2.y + a * (q1.y - q2.y);
 
@@ -80,7 +94,6 @@ impl Line {
     // Updaten der y-Koordinate abhängig von einem X
     pub fn y(&self, x: f64) -> f64 {
        let m = (self.start.y - self.end.y) / (self.start.x - self.end.x);
-
         m * (x - self.start.x) + self.start.y
     }
 }

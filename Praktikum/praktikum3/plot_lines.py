@@ -50,10 +50,16 @@ def generate_plot(filename, output_filename):
 #     (9.061, 21.568, 9.68597, 22.0677),
 #     (92.9745, 89.0119, 93.219, 88.95),
 # ]
-filename1 = 'G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\strecken\\s_1000_1.dat'  # Der Name der Datei, die die Liniensegmente enthält
-filename2 = 'G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\strecken\\s_10000_1.dat'
-filename3 = 'G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\strecken\\s_100000_1.dat'
+# filename1 = 'G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\strecken\\s_1000_1.dat'  # Der Name der Datei, die die Liniensegmente enthält
+# filename2 = 'G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\strecken\\s_10000_1.dat'
+# filename3 = 'G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\strecken\\s_100000_1.dat'
 
-generate_plot(filename1, 'output1.png')
-generate_plot(filename2, 'output2.png')
-generate_plot(filename3, 'output3.png')
+# generate_plot(filename1, 'output1.png')
+# generate_plot(filename2, 'output2.png')
+# generate_plot(filename3, 'output3.png')
+
+# filename = 'G:\Git\computational-geometry\Praktikum\praktikum3\strecken\s_1000_10.dat'
+# filename = 'G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\src\\testfiles\\jw_1000_10.txt'
+filename = 'G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\src\\testfiles\\jw_10000_50.txt'
+# filename = 'G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\src\\testfiles\\jw_100000_30.txt'
+generate_plot(filename, 'jw_10000_50.png')
