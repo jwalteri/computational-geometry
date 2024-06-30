@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 # avl_tree = "0.2.0"
+rand = "0.8"
+ordered-float = { version = "4.0", default-features = false }

@@ -37,7 +37,7 @@ fn main() {
 
     let start_time = Instant::now();
     let file_path = "strecken/s_1000_1.dat";
-    //let file_path = "strecken/s_10000_1.dat";
+    // let file_path = "strecken/s_10000_1.dat";
     //let file_path = "strecken/s_100000_1.dat";
 
     let segments = read_segments_from_file(file_path);
@@ -72,18 +72,20 @@ fn main() {
     info_message.push_str(" ms).\n");
 
     // Berechnung der Schnittpunkte
-    let intersections = calculate_intersections(&points);
+    let intersections = get_intersections(&convert_points_to_segments(&points)); //calculate_intersections(&points);
 
     // Zeitmessung: Berechnung der Schnittpunkte
     let calc_time = Instant::now();
     let calc_duration = calc_time - read_time;
 
     // Ausgabe der Anzahl der Schnittpunkte
-    info_message.push_str(&intersections.to_string());
-    info_message.push_str(" Schnittpunkte gefunden (Dauer: ");
-    info_message.push_str(&calc_duration.as_millis().to_string());
-    info_message.push_str(" ms).");
-    println!("{}", info_message);
+    println!("{} Schnittpunkte gefunden (Dauer: {} ms).", intersections.len(), calc_duration.as_millis());
+
+    // info_message.push_str(&intersections.to_string());
+    // info_message.push_str(" Schnittpunkte gefunden (Dauer: ");
+    // info_message.push_str(&calc_duration.as_millis().to_string());
+    // info_message.push_str(" ms).");
+    // println!("{}", info_message);
 
     // Output File abhängig von verwendetem Input anlegen
     let mut file_dir: Vec<&str> = file_path.split('.').collect();
@@ -95,6 +97,20 @@ fn main() {
     let mut outcome_file = File::create(outcome_dir).expect("Fehler bei erstellen der Datei!");
     outcome_file.write_all(info_message.as_bytes()).expect("Fehler bei schreiben der Datei!");
 }
+
+
+// &[(f64, f64, f64, f64)] to Linesegments
+fn convert_points_to_segments(points: &[(f64, f64, f64, f64)]) -> Vec<LineSegment> {
+    let mut segments = Vec::new();
+    for (x1, y1, x2, y2) in points {
+        segments.push(LineSegment {
+            start: Point { x: *x1, y: *y1 },
+            end: Point { x: *x2, y: *y2 },
+        });
+    }
+    segments
+}
+
 
 
 fn read_segments_from_file(filename: &str) -> Vec<LineSegment> {
@@ -125,7 +141,54 @@ struct LineSegment {
     end: Point
 }
 
+// Berechnung der Schnittpunkte
+fn get_intersections(segments: &Vec<LineSegment>) -> Vec<Point> {
+    let mut intersections = Vec::new();
+    for i in 0..segments.len() - 1 {
+        for j in i + 1..segments.len() {
+            if let Some(intersection) = segments[i].intersection(&segments[j]) {
+                intersections.push(intersection);
+            }
+        }
+    }
+    intersections
+}
+
+// ccw
+fn ccw(a: &Point, b: &Point, c: &Point) -> f64 {
+    (c.y - a.y) * (b.x - a.x) - (b.y - a.y) * (c.x - a.x)
+}
+
 impl LineSegment {
+
+
+    fn intersection(&self, other: &LineSegment) -> Option<Point> {
+        let p1 = &self.start;
+        let p2 = &self.end;
+        let q1 = &other.start;
+        let q2 = &other.end;
+        let ccwq1 = ccw(p1, p2, q1);
+        let ccwq2 = ccw(p1, p2, q2);
+        if ccwq1 * ccwq2 > 0.0 {
+        return None;
+        }
+        let ccwp1 = ccw(q1, q2, p1);
+        let ccwp2 = ccw(q1, q2, p2);
+        if ccwp1 * ccwp2 > 0.0 {
+        return None;
+        }
+        if ccwq1 == 0.0 && ccwq2 == 0.0 && ccwp1 == 0.0 && ccwp2 == 0.0 {
+        println!("Two colinear lines were detected!");
+        }
+        // Determine intersection point
+        let r_ab = (ccwq2 / ccwq1).abs();
+        let a = r_ab / (r_ab + 1.0);
+        let i_x = q2.x + a * (q1.x - q2.x);
+    
+        let i_y = q2.y + a * (q1.y - q2.y);
+        Some(Point { x: i_x, y: i_y })
+    }
+
     fn intersect(&self, other: &LineSegment) -> Option<Point> {
         let LineSegment { start: p1, end: p2} = self;
         let LineSegment { start: p3, end: p4} = other;

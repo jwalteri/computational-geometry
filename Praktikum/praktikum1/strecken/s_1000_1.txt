@@ -1,3 +1,2 @@
 Ungültige Zeilen: 
-Datei eingelesen (Dauer: 54 ms).
-11 Schnittpunkte gefunden (Dauer: 33 ms).
+Datei eingelesen (Dauer: 29 ms).
