@@ -8,6 +8,11 @@ fn main() {
 
     let segments = read_segments_from_file(r"G:\Git\computational-geometry\Praktikum\praktikum3\strecken\s_1000_10.dat");
 
+    let start_brute = Instant::now();
+    let intersections = brute_force(&segments);
+    let brute = start_brute.elapsed();
+    println!("Anzahl der Schnittpunkte: {}", intersections.len());
+    println!("Brute Force Zeit: {:?}", brute);
 
     let mut events: BTreeSet<Event> = BTreeSet::new();
     let mut intersection_points: BTreeSet<Point> = BTreeSet::new();
@@ -37,6 +42,7 @@ fn main() {
             sweep_line.update(event.point.x);
             match event.event_type {
                 EventType::Start => {
+
                     let line = event.line.unwrap();
                     sweep_line.insert(event.point.y, line.clone());
 
@@ -78,6 +84,7 @@ fn main() {
                         &other_line,
                         &intersection_point,
                     );
+                    
 
                     if let (line, Some(line_above)) = (bigger, above) {
                         if let Some(intersection_point) = line.line.intersection(&line_above.line) {
@@ -90,6 +97,7 @@ fn main() {
                             add_event(intersection_point, &line.line, &line_below.line, &mut events, &mut intersection_points)
                         };
                     };
+
                 }
             };
         }
@@ -119,6 +127,20 @@ fn add_event(intersection_point: Point, line: &Line, other_line: &Line, events: 
         }
 }
 
+fn brute_force(segments: &Vec<Line>) -> Vec<Point> {
+    let mut intersections = Vec::new();
+
+    for i in 0..segments.len() {
+        for j in i+1..segments.len() {
+            let intersection = segments[i].intersection(&segments[j]);
+            if let Some(intersection) = intersection {
+                intersections.push(intersection);
+            }
+        }
+    }
+
+    intersections
+}
 
 fn read_segments_from_file(filename: &str) -> Vec<Line> {
     let mut segments = Vec::new();

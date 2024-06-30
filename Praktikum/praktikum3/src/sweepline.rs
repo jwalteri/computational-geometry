@@ -1,7 +1,8 @@
-use std::collections::BTreeSet;
-
+use std::{collections::BTreeSet, time::Instant};
+use core::ops::Bound::Unbounded;
+use std::ops::Bound::Excluded;
 use crate::{line::{Line, SortableLine}, point::Point};
-
+use core::option::IterMut;
 pub struct SweepLine {
     pub segments: BTreeSet<SortableLine> 
 }
@@ -41,24 +42,37 @@ impl SweepLine {
     }
 
     pub fn get_neighbors(&self, line: &Line) -> (Option<SortableLine>, Option<SortableLine>) { 
-        let mut tmp = self.segments.iter();
-        let mut below = None;
-        let mut above = None;
-        let mut found = false;
-        while let Some(segment) = tmp.next() {
-            if found {
-                //above = Some(segment.clone());
-                below = Some(segment.clone());
-                break;
-            }
-            if segment.line == *line {
-                found = true;
-            } else {
-                //below = Some(segment.clone());
-                above = Some(segment.clone());
-            }
-        }
-        (below, above)
+        
+        //let copy = self.segments.clone();
+        let element = self.segments.iter().find(|x| x.line == *line).unwrap();
+
+                // Find the line above and below the target line
+        let above = self.segments.range((Unbounded, Excluded(element))).next_back();
+
+
+        let below = self.segments.range((Excluded(element), Unbounded)).next();
+
+
+        // let mut tmp = self.segments.iter();
+        // let mut below = None;
+        // let mut above = None;
+        // let mut found = false;
+        // while let Some(segment) = tmp.next() {
+        //     if found {
+        //         //above = Some(segment.clone());
+        //         below = Some(segment.clone());
+        //         break;
+        //     }
+        //     if segment.line == *line {
+        //         found = true;
+        //     } else {
+        //         //below = Some(segment.clone());
+        //         above = Some(segment.clone());
+        //     }
+        // }
+
+
+        (below.cloned(), above.cloned())
     }
 
     pub fn swap(
@@ -67,9 +81,12 @@ impl SweepLine {
         line2: &Line,
         intersection_point: &Point,
     ) -> (Option<SortableLine>, SortableLine, SortableLine, Option<SortableLine>) {
-        let copy = self.segments.clone();
-        let l1 = copy.iter().find(|x| x.line == *line1).unwrap();
-        let l2 = copy.iter().find(|x| x.line == *line2).unwrap();
+
+
+
+        //let copy = self.segments.clone();
+        let l1 = self.segments.iter().find(|x| x.line == *line1).unwrap();
+        let l2 = self.segments.iter().find(|x| x.line == *line2).unwrap();
 
         // Hinweis: Delta auf x rechnen! Das is es!
         let delta = 1e-9;
@@ -89,11 +106,30 @@ impl SweepLine {
         let bigger = l1.index.max(l2.index);
 
         let copy = self.segments.clone();        
-        let smaller = copy.iter().find(|x| x.index == smaller).unwrap();
-        let bigger = copy.iter().find(|x| x.index == bigger).unwrap();
+        let mut smaller = copy.iter().find(|x| x.index == smaller).unwrap();
+        let mut bigger = copy.iter().find(|x| x.index == bigger).unwrap();
 
+        // let smaller;
+        // let bigger;
+
+        // if l1.index < l2.index {
+        //     smaller = &l1;
+        //     bigger = &l2;
+        // } else {
+        //     smaller = &l2;
+        //     bigger = &l1;
+        // }
+
+
+
+        let start = Instant::now();
         let (below, _) = self.get_neighbors(&smaller.line);
         let (_, above) = self.get_neighbors(&bigger.line);
+
+        
+        // Zeitmessung
+        let swapped = start.elapsed();
+        println!("Swap Zeit: {:?}", swapped);
 
         (below, smaller.clone(), bigger.clone(), above)
     }
