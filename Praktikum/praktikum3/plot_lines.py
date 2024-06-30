@@ -60,6 +60,6 @@ def generate_plot(filename, output_filename):
 
 # filename = 'G:\Git\computational-geometry\Praktikum\praktikum3\strecken\s_1000_10.dat'
 # filename = 'G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\src\\testfiles\\jw_1000_10.txt'
-filename = 'G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\src\\testfiles\\jw_10000_50.txt'
+# filename = 'G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\src\\testfiles\\jw_10000_50.txt'
 # filename = 'G:\\Git\\computational-geometry\\Praktikum\\praktikum3\\src\\testfiles\\jw_100000_30.txt'
 generate_plot(filename, 'jw_10000_50.png')

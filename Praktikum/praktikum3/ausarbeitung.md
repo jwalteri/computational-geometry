@@ -84,15 +84,23 @@ Die Aufgabenstellung erfordert einen Vergleich der Laufzeiten von BruteForce und
 - s_10000_1.dat
 - s_100000_1.dat
 
-Alle Testfiles außer s_1000_10.dat enthalten Daten, welche nicht den Voraussetzungen des SweepLine-Algorithmus entsprechen. Es wurden insgesamt drei verschiedene vergleichbare Dateien erstellt. Gerundet auf zwei Nachkommastellen.
+Alle Testfiles außer s_1000_10.dat enthalten Daten, welche nicht den Voraussetzungen des SweepLine-Algorithmus entsprechen. Es wurden insgesamt drei verschiedene vergleichbare Dateien erstellt. Die Tabelle enthält die Anzahl der Segmente und Schnittpunkte pro Datei und die BruteForce- und SweepLine-Zeit. Gerundet auf zwei Nachkommastellen.
 
-| Dateiname   | Anzahl Segmente | Anzahl Schnittpunkte | BruteForce | SweepLine | Faktor |
-|-------------|------------------|----------------------|------------|-----------|-----------|
-| s_1000_10.dat     | 994             | 796                | 2.5568 ms        | 11.7406 ms     | 0.217774219
-| jw_1000_10.dat    | 1000            | 7                  | 2.3772 ms        | 867.5 µs       | 2.740288184
-| jw_10000_50.dat   | 994             | 193                | 241.7211 ms      | 24.8496 ms       | 9,727363821
-| jw_100000_30.dat  | 994             | 69                 | 24.9550364 s     | 153.1318 ms    | 162.9644293
+| Dateiname   | Anzahl Segmente | Anzahl Schnittpunkte | BruteForce | SweepLine |
+|-------------|------------------|----------------------|------------|-----------|
+| s_1000_10.dat     | 994             | 796                | 2.55 ms        | 11.74 ms
+| jw_1000_10.dat    | 1.000            | 7                  | 2.38 ms        | 867.50 µs
+| jw_10000_10.dat   | 10.000             | 193                | 241.72 ms      | 24.85 ms
+| jw_100000_10.dat  | 100.000             | 69                 | 24.96 s     | 153.13 ms
 
+## Visualisierung
+Es wurde eine einfache Visualisierung mit Python entwickelt. Zur Veranschaulichung sind hier alle Testfiles geplottet.
 
-
+### s_1000_10.dat
 ![s_1000_10.dat](s_1000_10.png "s_1000_10.dat")
+### jw_1000_10.dat
+![jw_1000_10.dat](jw_1000_10.png "jw_1000_10.dat")
+### jw_10000_10.dat
+![jw_10000_10.dat](jw_10000_10.png "jw_10000_10.dat")
+### jw_10000_10.dat
+![jw_10000_10.dat](jw_100000_10.png "jw_100000_10.dat")
