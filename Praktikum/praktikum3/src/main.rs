@@ -1,12 +1,13 @@
 
-use std::{collections::BTreeSet, time::Instant};
+use std::{collections::BTreeSet, fs::File, io::{self, BufRead, BufReader, Write}, time::Instant};
 
 use praktikum3::{event::{Event, EventType}, line::Line, point::Point, sweepline::SweepLine};
 
-
 fn main() {
 
-    let segments = read_segments_from_file(r"G:\Git\computational-geometry\Praktikum\praktikum3\strecken\s_1000_10.dat");
+    //let segments = read_segments_from_file(r"G:\Git\computational-geometry\Praktikum\praktikum3\strecken\s_1000_10.dat");
+    //let segments = read_segments_from_file(r"G:\Git\computational-geometry\Praktikum\praktikum3\src\testfiles\gen_10000_10.dat");
+    let segments = read_segments_from_file(r"G:\Git\cg-3-sweep-line\data\jw_1000_10.txt");
 
     let start_brute = Instant::now();
     let intersections = brute_force(&segments);
@@ -77,7 +78,6 @@ fn main() {
                     let line = event.line.unwrap();
                     let other_line = event.other.unwrap();
                     let intersection_point = event.point;
-
 
                     let (below, smaller, bigger, above) = sweep_line.swap(
                         &line,

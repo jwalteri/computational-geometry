@@ -75,6 +75,10 @@ impl SweepLine {
         (below.cloned(), above.cloned())
     }
 
+    pub fn find_by_line(&self, line: &Line) -> Option<SortableLine> {
+        self.segments.iter().find(|x| x.line == *line).cloned()
+    }
+
     pub fn swap(
         &mut self,
         line1: &Line,
@@ -85,14 +89,17 @@ impl SweepLine {
 
 
         //let copy = self.segments.clone();
-        let l1 = self.segments.iter().find(|x| x.line == *line1).unwrap();
-        let l2 = self.segments.iter().find(|x| x.line == *line2).unwrap();
+        // let l1 = self.segments.iter().find(|x| x.line == *line1).unwrap();
+        // let l2 = self.segments.iter().find(|x| x.line == *line2).unwrap();
+
+        let l1 = self.find_by_line(line1).unwrap();
+        let l2 = self.find_by_line(line2).unwrap();
 
         // Hinweis: Delta auf x rechnen! Das is es!
         let delta = 1e-9;
 
-        self.remove(l1);
-        self.remove(l2);
+        self.remove(&l1);
+        self.remove(&l2);
 
         let mut l1 = l1.clone();
         let mut l2 = l2.clone();
@@ -127,9 +134,9 @@ impl SweepLine {
         let (_, above) = self.get_neighbors(&bigger.line);
 
         
-        // Zeitmessung
-        let swapped = start.elapsed();
-        println!("Swap Zeit: {:?}", swapped);
+        // // Zeitmessung
+        // let swapped = start.elapsed();
+        // println!("Swap Zeit: {:?}", swapped);
 
         (below, smaller.clone(), bigger.clone(), above)
     }
