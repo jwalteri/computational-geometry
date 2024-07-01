@@ -1,0 +1,16 @@
+
+Convex hull of 10000 points in 4-d:
+
+  Number of vertices: 421
+  Number of facets: 2392
+
+Statistics for: rbox 10000 D4 | qconvex TO data/4_D_10000.txt
+
+  Number of points processed: 548
+  Number of hyperplanes created: 9611
+  Number of distance tests for qhull: 348774
+  Number of distance tests for merging: 48201
+  Number of distance tests for checking: 17692
+  Number of merged facets: 4
+  CPU seconds to compute hull (after input): 0.01
+

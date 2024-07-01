@@ -1,0 +1,13 @@
+
+Convex hull of 100 points in 3-d:
+
+  Number of vertices: 26
+  Number of facets: 48
+
+Statistics for: rbox 100 D3 | qconvex TO data/3_D_100.txt
+
+  Number of points processed: 28
+  Number of hyperplanes created: 109
+  Number of distance tests for qhull: 1163
+  CPU seconds to compute hull (after input):  0
+

@@ -1,0 +1,13 @@
+
+Convex hull of 100 points in 5-d:
+
+  Number of vertices: 78
+  Number of facets: 1174
+
+Statistics for: rbox 100 D5 | qconvex TO data/5_D_100.txt
+
+  Number of points processed: 83
+  Number of hyperplanes created: 3850
+  Number of distance tests for qhull: 9625
+  CPU seconds to compute hull (after input): 0.007
+

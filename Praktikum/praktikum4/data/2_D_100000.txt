@@ -1,0 +1,13 @@
+
+Convex hull of 100000 points in 2-d:
+
+  Number of vertices: 27
+  Number of facets: 27
+
+Statistics for: rbox 100000 D2 | qconvex TO data/2_D_100000.txt
+
+  Number of points processed: 27
+  Number of hyperplanes created: 52
+  Number of distance tests for qhull: 657162
+  CPU seconds to compute hull (after input): 0.009
+

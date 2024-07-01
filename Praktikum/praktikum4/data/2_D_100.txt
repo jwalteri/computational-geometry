@@ -4,7 +4,7 @@ Convex hull of 100 points in 2-d:
   Number of vertices: 15
   Number of facets: 15
 
-Statistics for: rbox 100 D2 | qconvex TO blob.txt
+Statistics for: rbox 100 D2 | qconvex TO data/2_D_100.txt
 
   Number of points processed: 15
   Number of hyperplanes created: 28

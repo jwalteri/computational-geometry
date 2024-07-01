@@ -1,51 +1,29 @@
 #!/bin/bash
 
-# Funktion um rbox und qconvex auszuführen und die gewünschten Informationen zu extrahieren
-run_rbox_qconvex() {
-    local num_points=$1
-    local dimension=$2
-    
-    # rbox Befehl
-    local rbox_command="rbox $num_points D$dimension"
-    # qconvex Befehl
-    local qconvex_command="qconvex s"
+# Funktion zur Generierung und Speicherung der Punkte
+generate_points() {
+  local num_points=$1
+  local dimension=$2
+  local filename=$3
 
-    # Führe den rbox Befehl aus und leite die Ausgabe an qconvex weiter
-    rbox_output=$($rbox_command)
-    if [ $? -ne 0 ]; then
-        echo "rbox error"
-        exit 1
-    fi
-    
-    # Führe den qconvex Befehl mit der Ausgabe von rbox als Eingabe aus
-    qconvex_output=$(echo "$rbox_command" | $qconvex_command)
-    if [ $? -ne 0 ]; then
-        echo "qconvex error"
-        exit 1
-    fi
+  # Generiere Punkte und speichere sie in einer Variable
+  local points=$(rbox $num_points D$dimension)
 
-    echo $rbox_output
-
-    # Extrahiere die gewünschten Informationen
-    num_points_processed=$(echo "$qconvex_output" | grep "points processed" | awk '{print $1}')
-    num_hyperplanes_created=$(echo "$qconvex_output" | grep "hyperplanes created" | awk '{print $1}')
-    num_distance_tests=$(echo "$qconvex_output" | grep "distance tests for qhull" | awk '{print $1}')
-    cpu_seconds=$(echo "$qconvex_output" | grep "CPU seconds" | awk '{print $3}')
-
-    # Rückgabe der extrahierten Informationen
-    echo "Number of points processed: $num_points_processed"
-    echo "Number of hyperplanes created: $num_hyperplanes_created"
-    echo "Number of distance tests for qhull: $num_distance_tests"
-    echo "CPU seconds: $cpu_seconds"
+  # Verwende die Variable als Input für qconvex und speichere das Ergebnis in der Zieldatei
+  echo "$points" | qconvex TO "data/${filename}.txt"
 }
 
-# Beispielverwendung
-if [ $# -ne 2 ]; then
-    echo "Usage: $0 <num_points> <dimension>"
-    exit 1
-fi
+# Funktion, die die Punkte für Dimensionen 1-10 mit verschiedenen Punktzahlen generiert
+generate_all_points() {
+  local points_array=(10 100 10000 100000) #1000000 10000000)
 
-num_points=$1
-dimension=$2
+  for dimension in {2..10}; do
+    for points in "${points_array[@]}"; do
+      local filename="${dimension}_D_${points}"
+      generate_points $points $dimension $filename
+    done
+  done
+}
 
-run_rbox_qconvex $num_points $dimension
+# Aufruf der Funktion zum Generieren der Punkte
+generate_all_points

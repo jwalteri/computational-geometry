@@ -1,0 +1,19 @@
+
+Convex hull of 100000 points in 7-d:
+
+  Number of vertices: 10596
+  Number of facets: 5223571
+  Number of non-simplicial facets: 4693
+
+Statistics for: rbox 100000 D7 | qconvex TO data/7_D_100000.txt
+
+  Number of points processed: 16567
+  Number of hyperplanes created: 50961121
+  Number of distance tests for qhull: 1197007369
+  Number of distance tests for merging: 527524436
+  Number of distance tests for checking: 59857264
+  Number of merged facets: 70425
+  CPU seconds to compute hull (after input): 442.1
+  Maximum distance of point above facet: 1.5e-14 (0.4x)
+  Maximum distance of vertex below facet: -1.3e-14 (0.4x)
+

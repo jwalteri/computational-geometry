@@ -1,0 +1,13 @@
+
+Convex hull of 10 points in 7-d:
+
+  Number of vertices: 10
+  Number of facets: 28
+
+Statistics for: rbox 10 D7 | qconvex TO data/7_D_10.txt
+
+  Number of points processed: 10
+  Number of hyperplanes created: 39
+  Number of distance tests for qhull: 23
+  CPU seconds to compute hull (after input):  0
+

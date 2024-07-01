@@ -1,0 +1,17 @@
+
+Convex hull of 10000 points in 5-d:
+
+  Number of vertices: 954
+  Number of facets: 19011
+  Number of non-simplicial facets: 3
+
+Statistics for: rbox 10000 D5 | qconvex TO data/5_D_10000.txt
+
+  Number of points processed: 1393
+  Number of hyperplanes created: 116094
+  Number of distance tests for qhull: 1843925
+  Number of distance tests for merging: 515277
+  Number of distance tests for checking: 167687
+  Number of merged facets: 18
+  CPU seconds to compute hull (after input): 0.114
+
