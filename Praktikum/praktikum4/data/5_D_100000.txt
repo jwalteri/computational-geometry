@@ -13,6 +13,6 @@ Statistics for: rbox 100000 D5 | qconvex TO data/5_D_100000.txt
   Number of distance tests for merging: 2524671
   Number of distance tests for checking: 463240
   Number of merged facets: 277
-  CPU seconds to compute hull (after input): 0.627
+  CPU seconds to compute hull (after input): 0.626
   Maximum distance of vertex below facet: -2.8e-15 (0.2x)
 

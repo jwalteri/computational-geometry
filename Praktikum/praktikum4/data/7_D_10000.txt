@@ -13,5 +13,5 @@ Statistics for: rbox 10000 D7 | qconvex TO data/7_D_10000.txt
   Number of distance tests for merging: 97245227
   Number of distance tests for checking: 15159651
   Number of merged facets: 1948
-  CPU seconds to compute hull (after input): 55.09
+  CPU seconds to compute hull (after input): 54.05
 

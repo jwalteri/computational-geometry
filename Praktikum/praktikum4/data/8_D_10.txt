@@ -9,5 +9,5 @@ Statistics for: rbox 10 D8 | qconvex TO data/8_D_10.txt
   Number of points processed: 10
   Number of hyperplanes created: 29
   Number of distance tests for qhull: 9
-  CPU seconds to compute hull (after input): 0.003
+  CPU seconds to compute hull (after input):  0
 

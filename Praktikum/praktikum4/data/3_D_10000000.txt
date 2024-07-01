@@ -1,0 +1,17 @@
+
+Convex hull of 10000000 points in 3-d:
+
+  Number of vertices: 267
+  Number of facets: 465
+  Number of non-simplicial facets: 13
+
+Statistics for: rbox 10000000 D3 | qconvex TO data/3_D_10000000.txt
+
+  Number of points processed: 320
+  Number of hyperplanes created: 1385
+  Number of distance tests for qhull: 114508002
+  Number of distance tests for merging: 8155
+  Number of distance tests for checking: 44327
+  Number of merged facets: 91
+  CPU seconds to compute hull (after input): 1.716
+

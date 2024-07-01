@@ -17,7 +17,16 @@ generate_points() {
 generate_all_points() {
   local points_array=(10 100 10000 100000) #1000000 10000000)
 
-  for dimension in {2..10}; do
+#   for dimension in {2..8}; do
+#     for points in "${points_array[@]}"; do
+#       local filename="${dimension}_D_${points}"
+#       generate_points $points $dimension $filename
+#     done
+#   done
+
+  local points_array=(1000000 10000000)
+  
+  for dimension in {2..6}; do
     for points in "${points_array[@]}"; do
       local filename="${dimension}_D_${points}"
       generate_points $points $dimension $filename

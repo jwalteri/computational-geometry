@@ -9,5 +9,5 @@ Statistics for: rbox 10000 D3 | qconvex TO data/3_D_10000.txt
   Number of points processed: 143
   Number of hyperplanes created: 659
   Number of distance tests for qhull: 126745
-  CPU seconds to compute hull (after input): 0.002
+  CPU seconds to compute hull (after input): 0.003
 
