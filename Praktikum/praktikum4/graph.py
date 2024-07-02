@@ -2,9 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Einlesen der CSV-Datei
-df = pd.read_csv('csv/cospherical.csv')
-output1 = "graphs/cospherical-pdt.png"
-output2 = "graphs/cospherical-pcs.png"
+df = pd.read_csv('csv/cubic.csv')
+output1 = "graphs/cubic-pdt.png"
+output2 = "graphs/cubic-pcs.png"
 
 # Extrahieren der Dimension und der Anzahl der Punkte aus dem Befehl
 df['Dimension'] = df['Befehl'].str.extract(r'rbox \d+ D(\d+)')
@@ -19,8 +19,8 @@ df['CPU Seconds'] = pd.to_numeric(df['CPU Seconds'])
 plt.figure(figsize=(10, 6))
 for dimension in df['Dimension'].unique():
     subset = df[df['Dimension'] == dimension]
-    # plt.plot(subset['Anzahl Punkte'], subset['Distance Tests'], marker='o', label=f'Dimension {dimension}')
-    plt.plot(subset['Anzahl Punkte'], subset['Distance Tests'], marker='o', label=f'distance tests')
+    plt.plot(subset['Anzahl Punkte'], subset['Distance Tests'], marker='o', label=f'Dimension {dimension}')
+    # plt.plot(subset['Anzahl Punkte'], subset['Distance Tests'], marker='o', label=f'distance tests')
 plt.xlabel('Anzahl der Punkte')
 plt.ylabel('Anzahl der Distance Tests')
 plt.title('Verhältnis Distance Tests und Anzahl der Punkte')
@@ -35,8 +35,8 @@ plt.show()
 plt.figure(figsize=(10, 6))
 for dimension in df['Dimension'].unique():
     subset = df[df['Dimension'] == dimension]
-    # plt.plot(subset['Anzahl Punkte'], subset['CPU Seconds'], marker='o', label=f'Dimension {dimension}')
-    plt.plot(subset['Anzahl Punkte'], subset['CPU Seconds'], marker='o', label=f'cpu seconds')
+    plt.plot(subset['Anzahl Punkte'], subset['CPU Seconds'], marker='o', label=f'Dimension {dimension}')
+    # plt.plot(subset['Anzahl Punkte'], subset['CPU Seconds'], marker='o', label=f'cpu seconds')
 plt.xlabel('Anzahl der Punkte')
 plt.ylabel('CPU Seconds')
 plt.title('Verhältnis CPU Seconds und Anzahl der Punkte')

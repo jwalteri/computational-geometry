@@ -29,8 +29,8 @@ extract_data() {
 
 # Hauptfunktion zum Aufruf der Extraktionsfunktion
 main() {
-  local input_folder="polygon"
-  local output_file="polygon.md"
+  local input_folder="cubic"
+  local output_file="cubic.md"
 
   # Rufe die Funktion zum Extrahieren der Daten auf
   extract_data $input_folder $output_file
