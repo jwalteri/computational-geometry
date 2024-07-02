@@ -1,0 +1,13 @@
+
+Convex hull of 10000 points in 3-d:
+
+  Number of vertices: 10000
+  Number of facets: 19996
+
+Statistics for: rbox l 10000 | qconvex TO spiral/spiral_10000.txt
+
+  Number of points processed: 10000
+  Number of hyperplanes created: 39965
+  Number of distance tests for qhull: 222074
+  CPU seconds to compute hull (after input): 0.015
+

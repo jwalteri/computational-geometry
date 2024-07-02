@@ -18,7 +18,7 @@ extract_data() {
     local hyperplanes=$(grep -oP 'Number of hyperplanes created: \K[0-9]+' "$file")
     local distance_tests=$(grep -oP 'Number of distance tests for qhull: \K[0-9]+' "$file")
     local cpu_seconds=$(grep -oP 'CPU seconds to compute hull \(after input\): \K[0-9]+(\.[0-9]+)?' "$file")
-        
+
     # Ersetze alle Vorkommen von "|" durch "I" in der Variable befehl
     befehl=$(echo "$befehl" | sed 's/|/I/g')
 
@@ -29,8 +29,8 @@ extract_data() {
 
 # Hauptfunktion zum Aufruf der Extraktionsfunktion
 main() {
-  local input_folder="data"
-  local output_file="results.md"
+  local input_folder="polygon"
+  local output_file="polygon.md"
 
   # Rufe die Funktion zum Extrahieren der Daten auf
   extract_data $input_folder $output_file

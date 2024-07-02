@@ -1,0 +1,14 @@
+
+Convex hull of 100000 points in 2-d:
+
+  Number of vertices: 99997
+  Number of facets: 99997
+
+Statistics for: rbox 100000 s D2 | qconvex TO cospherical/cospherical_100000.txt
+
+  Number of points processed: 99997
+  Number of hyperplanes created: 199992
+  Number of distance tests for qhull: 2395081
+  CPU seconds to compute hull (after input): 0.168
+  Maximum distance of point above facet: 8.9e-16 (0.3x)
+

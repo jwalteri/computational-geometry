@@ -1,0 +1,7 @@
+| Befehl | Points | Hyperplanes | Distance Tests | CPU Seconds |
+|--------|--------|-------------|----------------|-------------|
+| rbox 10 r D2 I qconvex TO polygon/polygon_10.txt | 10 | 18 | 31 | 0 |
+| rbox 100 r D2 I qconvex TO polygon/polygon_100.txt | 100 | 198 | 854 | 0 |
+| rbox 10000 r D2 I qconvex TO polygon/polygon_10000.txt | 10000 | 19997 | 185329 | 0.01 |
+| rbox 100000 r D2 I qconvex TO polygon/polygon_100000.txt | 100000 | 199998 | 2354356 | 0.108 |
+| rbox 1000000 r D2 I qconvex TO polygon/polygon_1000000.txt | 1000000 | 1999998 | 28423413 | 1.125 |
