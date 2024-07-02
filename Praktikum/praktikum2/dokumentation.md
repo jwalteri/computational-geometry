@@ -116,7 +116,7 @@ Quelle für Größe der Bundesländer laut Statista: [ Fläche der deutschen Bun
 | Sachsen-Anhalt            | 17450,543     | 20467         | 0,77       |
 | Schleswig-Holstein        | 13456,4375    | 15804         | 0,85       |
 | Thueringen                | 13724,586     | 16202         | 0,85       |
-
+p
 Bei der Betrachtung der Tabelle fällt auf, dass fast überall ein Verhältnis von ~0,85 auftritt. Dadurch kann behauptet werden, dass die Messungen als korrekt angenommen werden können, wenn das Verhältnis übereinstimmt. Jedoch gibt es ein paar Ausreißer: Bremen, Sachsen und Sachsen-Anhalt
 
 Relativer Fehler:

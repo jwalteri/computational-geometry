@@ -19,6 +19,8 @@ use std::io::{BufRead, BufReader};
 use std::io::Write;
 use std::path::Path;
 
+use geo::Intersects;
+
 
 /*
 Datei eingelesen (Dauer: 96507 ms).
@@ -36,26 +38,9 @@ const PRECISION: f64 = 0.0001;
 fn main() {
 
     let start_time = Instant::now();
-    let file_path = "strecken/s_1000_1.dat";
-    // let file_path = "strecken/s_10000_1.dat";
-    //let file_path = "strecken/s_100000_1.dat";
-
-    let segments = read_segments_from_file(file_path);
-
-    let mut intersections = 0;
-
-    for i in 0..segments.len() - 1 {
-        for j in i + 1..segments.len() {
-            if let Some(intersection) = segments[i].intersect(&segments[j]) {
-                intersections += 1;
-                //println!("Schnittpunkt: {} {}", intersection.x, intersection.y);
-            }
-        }
-    }
-
-    // Ausgabe Schnittpunkte
-    println!("{} Schnittpunkte gefunden", intersections);
-
+    // let file_path = "strecken/s_1000_1.dat";
+    let file_path = "strecken/s_10000_1.dat";
+    // let file_path = "strecken/s_100000_1.dat";
 
 
     // Logging mithilfe von info_message
@@ -63,6 +48,19 @@ fn main() {
     // Einlesen der Datei
     let (points, updated_info_message) = extract_points(file_path);
     info_message.push_str(&updated_info_message);
+
+    let geo_lines = points_to_geo_lines(&points);
+
+    let mut geo_intersections = 0;
+    for i in 0..geo_lines.len() {
+        for j in i+1..geo_lines.len() {
+            if geo_lines[i].intersects(&geo_lines[j]) {
+                geo_intersections = geo_intersections + 1;
+            }
+        }   
+    }
+
+    println!("Geo Anzahl Schnittpunkte: {}", geo_intersections);
 
     // Zeitmessung: Einlesen der Datei
     let read_time = Instant::now();
@@ -80,12 +78,6 @@ fn main() {
 
     // Ausgabe der Anzahl der Schnittpunkte
     println!("{} Schnittpunkte gefunden (Dauer: {} ms).", intersections.len(), calc_duration.as_millis());
-
-    // info_message.push_str(&intersections.to_string());
-    // info_message.push_str(" Schnittpunkte gefunden (Dauer: ");
-    // info_message.push_str(&calc_duration.as_millis().to_string());
-    // info_message.push_str(" ms).");
-    // println!("{}", info_message);
 
     // Output File abhängig von verwendetem Input anlegen
     let mut file_dir: Vec<&str> = file_path.split('.').collect();
@@ -131,6 +123,14 @@ fn read_segments_from_file(filename: &str) -> Vec<LineSegment> {
     segments
 }
 
+fn points_to_geo_lines(points: &[(f64, f64, f64, f64)]) -> Vec<geo::Line<f64>> {
+    let mut lines = Vec::new();
+    for (x1, y1, x2, y2) in points {
+        lines.push(geo::Line::new([*x1, *y1], [*x2, *y2]));
+    }
+    lines
+}
+
 struct Point {
     x: f64,
     y: f64,
@@ -144,48 +144,68 @@ struct LineSegment {
 // Berechnung der Schnittpunkte
 fn get_intersections(segments: &Vec<LineSegment>) -> Vec<Point> {
     let mut intersections = Vec::new();
-    for i in 0..segments.len() - 1 {
-        for j in i + 1..segments.len() {
-            if let Some(intersection) = segments[i].intersection(&segments[j]) {
+
+    for i in 0..segments.len() {
+        for j in i+1..segments.len() {
+            let intersection = segments[i].intersection(&segments[j]);
+            if let Some(intersection) = intersection {
                 intersections.push(intersection);
             }
         }
     }
+
     intersections
 }
 
-// ccw
-fn ccw(a: &Point, b: &Point, c: &Point) -> f64 {
-    (c.y - a.y) * (b.x - a.x) - (b.y - a.y) * (c.x - a.x)
+fn ccw(p: &Point, q: &Point, r: &Point) -> f64 {
+    (p.x * q.y - p.y * q.x) + (q.x * r.y - q.y * r.x) + (p.y * r.x - p.x * r.y)
 }
 
 impl LineSegment {
 
 
-    fn intersection(&self, other: &LineSegment) -> Option<Point> {
+    pub fn intersection(&self, other: &LineSegment) -> Option<Point> {
         let p1 = &self.start;
         let p2 = &self.end;
         let q1 = &other.start;
         let q2 = &other.end;
-        let ccwq1 = ccw(p1, p2, q1);
-        let ccwq2 = ccw(p1, p2, q2);
-        if ccwq1 * ccwq2 > 0.0 {
-        return None;
+
+        // Orientierung von q1 zu Linie p1p2
+        let q1_to_p1p2 = ccw(p1, p2, q1);
+
+        // Orientierung von q2 zu Linie p1p2
+        let q2_to_p1p2 = ccw(p1, p2, q2);
+
+        // Wenn beide Orientierungen das gleiche Vorzeichen haben,
+        // dann liegen q1 und q2 auf der gleichen Seite der Linie p1p2
+        // => Die Linien können sich nicht schneiden
+        if q1_to_p1p2 * q2_to_p1p2 > 0.0 {
+            return None;
         }
-        let ccwp1 = ccw(q1, q2, p1);
-        let ccwp2 = ccw(q1, q2, p2);
-        if ccwp1 * ccwp2 > 0.0 {
-        return None;
+
+        // Orientierung von p1 zu Linie q1q2
+        let p1_to_q1q2 = ccw(q1, q2, p1);
+
+        // Orientierung von p2 zu Linie q1q2
+        let p2_to_q1q2 = ccw(q1, q2, p2);
+
+        // Gleiches Prinzip wie oben
+        if p1_to_q1q2 * p2_to_q1q2 > 0.0 {
+            return None;
         }
-        if ccwq1 == 0.0 && ccwq2 == 0.0 && ccwp1 == 0.0 && ccwp2 == 0.0 {
-        println!("Two colinear lines were detected!");
-        }
-        // Determine intersection point
-        let r_ab = (ccwq2 / ccwq1).abs();
-        let a = r_ab / (r_ab + 1.0);
+
+        // Verhältnis CCW-Werte
+        // -> Bestimmt Anteil der Strecke q1q2 für Schnittpunktberechnung
+        let ratio = (q2_to_p1p2 / q1_to_p1p2).abs();
+
+        // Faktor a für Berechnung des Schnittpunktes
+        // Normalisiert ratio auf 0..1
+        let a = ratio / (ratio + 1.0);
+
+        // Berechnung des Schnittpunktes
         let i_x = q2.x + a * (q1.x - q2.x);
-    
         let i_y = q2.y + a * (q1.y - q2.y);
+
         Some(Point { x: i_x, y: i_y })
     }
 

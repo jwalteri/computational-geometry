@@ -1,2 +1,2 @@
 Ungültige Zeilen: 
-Datei eingelesen (Dauer: 29 ms).
+Datei eingelesen (Dauer: 24 ms).
