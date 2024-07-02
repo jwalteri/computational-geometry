@@ -1,0 +1,5 @@
+Befehl,Points,Hyperplanes,Distance Tests,CPU Seconds
+"rbox 10 D3 qconvex TO spiral/spiral_10.txt",10,25,39,0
+"rbox 100 D3 qconvex TO spiral/spiral_100.txt",100,378,1168,0
+"rbox 10000 D3 qconvex TO spiral/spiral_10000.txt",10000,39965,222074,0.015
+"rbox 100000 D3 qconvex TO spiral/spiral_100000.txt",100000,399957,2715508,0.165
