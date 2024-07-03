@@ -1,0 +1,2 @@
+Ungültige Zeilen: 
+Datei eingelesen (Dauer: 733773 ms).

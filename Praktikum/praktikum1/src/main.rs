@@ -4,92 +4,101 @@
 // Copyright: J. Walter, L. Biege
 
 
-/* DEFINITION Schnittpunkte:
-T = true (-> det != 0 && 0 <= t&s <= 1)
-II = false (-> det == 0 && cross_prod != 0)
-Deckungsgleich = true (-> det == 0 && cross_prod == 0)
-- - = false (wie Deckungsgleich UND A|B nicht in CD && C|D nicht in AB)
-*/
-
 use core::panic;
-use std::f32::EPSILON;
-use std::time::{Instant, Duration};
+use std::time::Instant;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::io::Write;
-use std::path::Path;
 
-use geo::Intersects;
+use geo::{Intersects, Line};
 
-
-/*
-Datei eingelesen (Dauer: 96507 ms).
-15 Schnittpunkte gefunden (Dauer: 18 ms).
-
-Datei eingelesen (Dauer: 31 ms).
-737 Schnittpunkte gefunden (Dauer: 1643 ms).
-
-Datei eingelesen (Dauer: 206 ms).
-77139 Schnittpunkte gefunden (Dauer: 162805 ms).
-*/
-
-const PRECISION: f64 = 0.0001;
 
 fn main() {
 
-    let start_time = Instant::now();
     // let file_path = "strecken/s_1000_1.dat";
     let file_path = "strecken/s_10000_1.dat";
     // let file_path = "strecken/s_100000_1.dat";
 
+    // Geo-Lib
+    // Berechnung der Schnittpunkte mithilfe der Geo-Lib
+    // Hinweis im Praktikum gehört, dass Geo-Lib für die Berechnung der Schnittpunkte verwendet werden kann
+
+    // Zeitmessung
+    let geo_read_file_start = Instant::now();
+    let points_2d = extract_points_2d(file_path);
+    let geo_read_file_end = Instant::now();
+    let geo_read_duration = geo_read_file_end - geo_read_file_start;
+
+    println!("Datei eingelesen (Geo-Lib).");
+    println!("\tDauer: {} ms.", geo_read_duration.as_millis());
+
+    let geo_start_time = Instant::now();
+
+    let mut geo_count = 0;
+    for i in 0..points_2d.len() {
+        for j in i+1..points_2d.len() {
+            let intersection = points_2d[i].intersects(&points_2d[j]);
+            if intersection {
+                geo_count += 1;
+            }
+        }
+    }
+
+    // Zeitmessung
+    let geo_end_time = Instant::now();
+
+    println!("{} Schnittpunkte gefunden (Geo-Lib).", geo_count);
+    let geo_duration = geo_end_time - geo_start_time;
+    println!("\tDauer: {} ms.", geo_duration.as_millis());
+
+    //
+    // Unsere Implementierung
+    //
+    let file_time_start = Instant::now();
 
     // Logging mithilfe von info_message
     let mut info_message = String::new();
     // Einlesen der Datei
     let (points, updated_info_message) = extract_points(file_path);
-    info_message.push_str(&updated_info_message);
+    let segments = &convert_points_to_segments(&points);
+    let file_time_end = Instant::now();
+    let file_duration = file_time_end - file_time_start;
 
-    let geo_lines = points_to_geo_lines(&points);
+    println!("Datei eingelesen (Unsere Implementierung).");
+    println!("\tDauer: {} ms.", file_duration.as_millis());
 
-    let mut geo_intersections = 0;
-    for i in 0..geo_lines.len() {
-        for j in i+1..geo_lines.len() {
-            if geo_lines[i].intersects(&geo_lines[j]) {
-                geo_intersections = geo_intersections + 1;
-            }
-        }   
-    }
-
-    println!("Geo Anzahl Schnittpunkte: {}", geo_intersections);
-
-    // Zeitmessung: Einlesen der Datei
-    let read_time = Instant::now();
-    let read_duration = read_time - start_time;
-    info_message.push_str("Datei eingelesen (Dauer: ");
-    info_message.push_str(&read_duration.as_millis().to_string());
-    info_message.push_str(" ms).\n");
-
+    let algo_time_start = Instant::now();
     // Berechnung der Schnittpunkte
-    let intersections = get_intersections(&convert_points_to_segments(&points)); //calculate_intersections(&points);
+    let intersections = get_intersections(segments); //calculate_intersections(&points);
+    let algo_time_end = Instant::now();
+    let algo_duration = algo_time_end - algo_time_start;
 
-    // Zeitmessung: Berechnung der Schnittpunkte
-    let calc_time = Instant::now();
-    let calc_duration = calc_time - read_time;
+    println!("{} Schnittpunkte gefunden (Unsere Implementierung).", intersections);
+    println!("\tDauer: {} ms.", algo_duration.as_millis());
 
-    // Ausgabe der Anzahl der Schnittpunkte
-    println!("{} Schnittpunkte gefunden (Dauer: {} ms).", intersections.len(), calc_duration.as_millis());
-
-    // Output File abhängig von verwendetem Input anlegen
-    let mut file_dir: Vec<&str> = file_path.split('.').collect();
-    file_dir.pop();
-    file_dir.push(".txt");
-    let outcome_dir = file_dir.concat();
-    println!("{}", outcome_dir);
-
-    let mut outcome_file = File::create(outcome_dir).expect("Fehler bei erstellen der Datei!");
-    outcome_file.write_all(info_message.as_bytes()).expect("Fehler bei schreiben der Datei!");
 }
 
+///
+/// Zwei Linien liegen auf der selben Linie -> colinear
+/// Um Schnittpunkt zu erkennen:
+/// Prüft, ob ein Segment im Bereich eines anderen Segments liegt
+/// Quellen: 
+/// - Hinweis auf Notwendigkeit im Praktikum bekommen
+/// - https://docs.rs/intersect2d/
+/// - https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
+fn colinear_intersection(p1: &Point, p2: &Point, q1: &Point, q2: &Point) -> bool {
+
+    // Überlappen sich die x-Koordinaten der Segmente?
+    if q1.x.min(q2.x) >= p1.x.min(p2.x) && q1.x.min(q2.x) <= p1.x.max(p2.x) {
+        return true;
+    }
+
+    // Überlappen sich die y-Koordinaten der Segmente?
+    if q1.y.min(q2.y) <= p1.y.max(p2.y) && q1.y.max(q2.y) >= p1.y.min(p2.y) {
+        return true;
+    }
+
+    return false
+}
 
 // &[(f64, f64, f64, f64)] to Linesegments
 fn convert_points_to_segments(points: &[(f64, f64, f64, f64)]) -> Vec<LineSegment> {
@@ -104,33 +113,7 @@ fn convert_points_to_segments(points: &[(f64, f64, f64, f64)]) -> Vec<LineSegmen
 }
 
 
-
-fn read_segments_from_file(filename: &str) -> Vec<LineSegment> {
-    let mut segments = Vec::new();
-    let file = std::fs::read_to_string(filename).expect("Could not read file");
-    let mut current_id = 0;
-    for line in file.lines() {
-        let mut parts = line.split_whitespace();
-        let mut x1: f64 = parts.next().unwrap().parse().unwrap();
-        let y1: f64 = parts.next().unwrap().parse().unwrap();
-        let mut x2: f64 = parts.next().unwrap().parse().unwrap();
-        let y2: f64 = parts.next().unwrap().parse().unwrap();
-        segments.push(LineSegment {
-                    start: Point { x: x1, y: y1 },
-                    end: Point { x: x2, y: y2 },
-                });
-    }
-    segments
-}
-
-fn points_to_geo_lines(points: &[(f64, f64, f64, f64)]) -> Vec<geo::Line<f64>> {
-    let mut lines = Vec::new();
-    for (x1, y1, x2, y2) in points {
-        lines.push(geo::Line::new([*x1, *y1], [*x2, *y2]));
-    }
-    lines
-}
-
+#[derive(Debug, Copy, Clone)]
 struct Point {
     x: f64,
     y: f64,
@@ -142,14 +125,14 @@ struct LineSegment {
 }
 
 // Berechnung der Schnittpunkte
-fn get_intersections(segments: &Vec<LineSegment>) -> Vec<Point> {
-    let mut intersections = Vec::new();
+fn get_intersections(segments: &Vec<LineSegment>) -> u32 {
+    let mut intersections = 0;
 
     for i in 0..segments.len() {
         for j in i+1..segments.len() {
             let intersection = segments[i].intersection(&segments[j]);
-            if let Some(intersection) = intersection {
-                intersections.push(intersection);
+            if intersection {
+                intersections += 1;
             }
         }
     }
@@ -163,8 +146,10 @@ fn ccw(p: &Point, q: &Point, r: &Point) -> f64 {
 
 impl LineSegment {
 
-
-    pub fn intersection(&self, other: &LineSegment) -> Option<Point> {
+    /// Quellen: 
+    /// - https://docs.rs/intersect2d/
+    /// - https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect/565282#565282
+    pub fn intersection(&self, other: &LineSegment) -> bool {
         let p1 = &self.start;
         let p2 = &self.end;
         let q1 = &other.start;
@@ -180,7 +165,7 @@ impl LineSegment {
         // dann liegen q1 und q2 auf der gleichen Seite der Linie p1p2
         // => Die Linien können sich nicht schneiden
         if q1_to_p1p2 * q2_to_p1p2 > 0.0 {
-            return None;
+            return false;
         }
 
         // Orientierung von p1 zu Linie q1q2
@@ -191,143 +176,45 @@ impl LineSegment {
 
         // Gleiches Prinzip wie oben
         if p1_to_q1q2 * p2_to_q1q2 > 0.0 {
-            return None;
+            return false;
         }
 
-        // Verhältnis CCW-Werte
-        // -> Bestimmt Anteil der Strecke q1q2 für Schnittpunktberechnung
-        let ratio = (q2_to_p1p2 / q1_to_p1p2).abs();
+        // Wenn alle Punkte kollinear sind -> Schnitt?
+        if q1_to_p1p2 == 0.0 && q2_to_p1p2 == 0.0 && p1_to_q1q2 == 0.0 && p2_to_q1q2 == 0.0 {
+            return colinear_intersection(p1, p2, q1, q2);
 
-        // Faktor a für Berechnung des Schnittpunktes
-        // Normalisiert ratio auf 0..1
-        let a = ratio / (ratio + 1.0);
-
-        // Berechnung des Schnittpunktes
-        let i_x = q2.x + a * (q1.x - q2.x);
-        let i_y = q2.y + a * (q1.y - q2.y);
-
-        Some(Point { x: i_x, y: i_y })
-    }
-
-    fn intersect(&self, other: &LineSegment) -> Option<Point> {
-        let LineSegment { start: p1, end: p2} = self;
-        let LineSegment { start: p3, end: p4} = other;
-
-        let d = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y);
-        if d.abs() < std::f64::EPSILON {
-            return None;
         }
 
-        let u = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / d;
-        let v = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / d;
-
-        if u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0 {
-            return None;
-        }
-
-        Some(Point {
-            x: Self::round_to_4_decimals(p1.x + u * (p2.x - p1.x)),
-            y: Self::round_to_4_decimals(p1.y + u * (p2.y - p1.y)),
-        })
+        return true;
     }
 
-    fn round_to_4_decimals(num: f64) -> f64 {
-        (num * 10000.0).round() / 10000.0
-    }
 }
-pub fn calculate_intersections(points: &[(f64, f64, f64, f64)]) -> usize {
 
-    let n = points.len();
-    // Initialisiere Anzahl der Schnittpunkte mit 0
-    let mut intersections = 0;
-    // line1 = p1 + t * d12     -> d12 = p2-p1
-    // line2 = p3 + s * d34     -> d34 = p4-p3
+// Liest die Punkte aus einer Datei ein und gibt sie als intersect2d::Line Vector zurück
+fn extract_points_2d(file_path: &str) -> Vec<Line> {
+    let mut points: Vec<Line> = Vec::new();
 
-    // Berechne Schnittpunkte zwischen Linienabschnitten
-    for i in 0..n - 1 { // Iteriere über alle Punkte außer den letzten beiden
+    if let Ok(file) = File::open(file_path) {
+        let reader = BufReader::new(file);
 
-        // Aktuellen Linienabschnitt bestimmen
-        let (x1, y1, x2, y2) = points[i];
-        let p1 = Point { x: x1, y: y1 };
-        let p2 = Point { x: x2, y: y2 };
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                let mut values = line.split_whitespace().filter_map(|s| s.parse::<f64>().ok());
 
-        // Richtungsvektor des aktuellen Linienabschnitts
-        let d12 = Point { x: p2.x - p1.x, y: p2.y - p1.y };
-
-        // Iteriere über die verbleibenden Punkte
-        for j in i + 1..n { //- 1 {
-            
-            // Linienabschnitt zum Vergleichen bestimmen
-            let (x3, y3, x4, y4) = points[j];
-            let q1 = Point { x: x3, y: y3 };
-            let q2 = Point { x: x4, y: y4 };
-            
-            // Richtungsvektor des Linienabschnitt zum Vergleichen bestimmen
-            let d34 = Point { x: q2.x - q1.x, y: q2.y - q1.y };
-
-             // Determinante bestimmen für Überprüfung, ob Linienabschnitte parallel sind
-            let det = d12.x * d34.y - d34.x * d12.y;
-
-            // Kreuzprodukt für die Überprüfung auf Kollinearität
-            let cross_prod = (q1.x - p1.x) * d34.y - (q1.y - p1.y) * d34.x;
-
-            // Wenn Linien nicht parallel sind
-            //if det != 0.0 {
-            if det.abs() > PRECISION {
-
-                // Parameter für den Schnittpunkt des ersten Linienabschnitts
-                let t = cross_prod / det;
-                // Berechnung des Schnittpunkts
-                let intersection_s = Point { x: p1.x + t * d12.x, y: p1.y + t * d12.y};
-
-                // Berechnung des Parameters für den Schnittpunkt des zweiten Linienabschnitts
-                let s = if d34.x != 0.0 { // 0 weil DivisionByZero
-                    (intersection_s.x - q1.x) / d34.x
+                if let (Some(x1), Some(y1), Some(x2), Some(y2)) = (values.next(), values.next(), values.next(), values.next()) {
+                    points.push(Line::new([x1, y1], [x2, y2]));
                 } else {
-                    (intersection_s.y - q1.y) / d34.y
-                };
-
-                // Wenn die Parameter zwischen 0 und 1 liegen, gibt es einen Schnittpunkt
-                // TODO: Prüfen, ob das 0 - PRECISION sinn macht
-                if - PRECISION <= t && t <= 1.0 + PRECISION && 
-                - PRECISION <= s && s <= 1.0 + PRECISION {
-                    // Inkrementiere die Anzahl der Schnittpunkte
-                    intersections = intersections + 1;
-                    //println!("Schnittpunkt: I {}, J {}", i, j);
-                    println!("Schnittpunkt: {} {}", intersection_s.x, intersection_s.y);
-                }
-            }
-
-            // Wenn Linien kollinear sind
-            // else if cross_prod == 0.0 {
-            else if cross_prod.abs() < PRECISION {
-
-                // Teilweise überlappende Linienabschnitte?
-                let partially_coincident = segments_overlap(&p1, &p2, &q1, &q2);
-
-                if partially_coincident {
-                    intersections = intersections + 1;
-                    //println!("I {}, J {}", i, j);
+                    println!("Ungültige Zeile übersprungen: {}", line);
                 }
             }
         }
+    } else {
+        panic!("Datei konnte nicht geöffnet werden: {}", file_path);
     }
 
-    intersections
+    points
 }
 
-// Überprüft, ob ein Punkt auf der Strecke liegt
-fn is_inside(punkt: &Point, start: &Point, end: &Point) -> bool {
-    (start.x <= punkt.x && punkt.x <= end.x || start.x >= punkt.x && punkt.x >= end.x) &&
-    (start.y <= punkt.y && punkt.y <= end.y || start.y >= punkt.y && punkt.y >= end.y)
-}
-
-// Prüft, ob sich eines der Segmente überlappen
-fn segments_overlap(start1: &Point, end1: &Point, start2: &Point, end2: &Point) -> bool {
-let p1_inside_segment2 = is_inside(start2, start1, end1) || is_inside(end2, start1, end1);
-let p2_inside_segment1 = is_inside(start1, start2, end2) || is_inside(end1, start2, end2);
-p1_inside_segment2 || p2_inside_segment1
-}
 
 /// Liest die Punkte aus einer Datei ein und gibt sie als Vektor zurück.
 /// Gibt außerdem eine Info-Nachricht zurück, die ungültige Zeilen enthält.
@@ -367,92 +254,106 @@ fn extract_points(file_path: &str) -> (Vec<(f64, f64, f64, f64)>, String) {
 
 #[cfg(test)]
 mod tests{
+
     use super::*;
     #[test]
     fn test_gleicher_endpunkt() {
-        let points = &[
-            (0.0, 0.0, 2.0, 2.0), 
-            (1.0, 3.0, 2.0, 2.0)];
 
-        assert_eq!(calculate_intersections(points), 1);
+        assert_eq!(LineSegment {
+            start: Point { x: 0.0, y: 0.0 },
+            end: Point { x: 2.0, y: 2.0 }
+        }.intersection(&LineSegment {
+            start: Point { x: 1.0, y: 3.0 },
+            end: Point { x: 2.0, y: 2.0 }
+        }), true);
     }
     
 #[test]
 fn test_gleicher_endpunkt2() {
-    let points = &[
-        (0.0, 0.0, 2.0, 2.0), 
-        (3.0, 1.0, 2.0, 2.0)];
-
-    assert_eq!(calculate_intersections(points), 1);
+    assert_eq!(LineSegment {
+        start: Point { x: 0.0, y: 0.0 },
+        end: Point { x: 2.0, y: 2.0 }
+    }.intersection(&LineSegment {
+        start: Point { x: 3.0, y: 1.0 },
+        end: Point { x: 2.0, y: 2.0 }
+    }), true);
 }
 
 #[test]
 fn test_schnitt_im_endpunkt() {
-    let points = &[
-        (0.0, 0.0, 2.0, 2.0), 
-        (1.0, 3.0, 3.0, 1.0)];
-
-    assert_eq!(calculate_intersections(points), 1);
+    assert_eq!(LineSegment {
+        start: Point { x: 0.0, y: 0.0 },
+        end: Point { x: 2.0, y: 2.0 }
+    }.intersection(&LineSegment {
+        start: Point { x: 1.0, y: 3.0 },
+        end: Point { x: 3.0, y: 1.0 }
+    }), true);
 }
 
 #[test]
 fn test_senkrecht_waagerecht() {
-    let points = &[
-        (1.0, 2.0, 3.0, 2.0), 
-        (2.0, 3.0, 2.0, 1.0)];
-
-    assert_eq!(calculate_intersections(points), 1);
+    assert_eq!(LineSegment {
+        start: Point { x: 1.0, y: 2.0 },
+        end: Point { x: 3.0, y: 2.0 }
+    }.intersection(&LineSegment {
+        start: Point { x: 2.0, y: 3.0 },
+        end: Point { x: 2.0, y: 1.0 }
+    }), true);
 }
 
 #[test]
 fn test_kollinear_schnitt() {
-    let points = &[
-        (1.0, 1.0, 2.0, 2.0), 
-        (3.0, 3.0, 2.0, 2.0)];
-
-    assert_eq!(calculate_intersections(points), 1);
+    assert_eq!(LineSegment {
+        start: Point { x: 1.0, y: 1.0 },
+        end: Point { x: 2.0, y: 2.0 }
+    }.intersection(&LineSegment {
+        start: Point { x: 3.0, y: 3.0 },
+        end: Point { x: 2.0, y: 2.0 }
+    }), true);
 }
 
 #[test]
 fn test_strecke_in_strecke() {
-    let points = &[
-        (1.0, 1.0, 3.0, 3.0), 
-        (4.0, 4.0, 2.0, 2.0)];
-
-    assert_eq!(calculate_intersections(points), 1);
+    assert_eq!(LineSegment {
+        start: Point { x: 1.0, y: 1.0 },
+        end: Point { x: 3.0, y: 3.0 }
+    }.intersection(&LineSegment {
+        start: Point { x: 4.0, y: 4.0 },
+        end: Point { x: 2.0, y: 2.0 }
+    }), true);
 }
 
 #[test]
 fn test_kollinear_kein_schnitt() {
-    let points = &[
-        (1.0, 1.0, 2.0, 2.0), 
-        (3.0, 3.0, 4.0, 4.0)];
-
-    assert_eq!(calculate_intersections(points), 0);
+    assert_eq!(LineSegment {
+        start: Point { x: 1.0, y: 1.0 },
+        end: Point { x: 2.0, y: 2.0 }
+    }.intersection(&LineSegment {
+        start: Point { x: 3.0, y: 3.0 },
+        end: Point { x: 4.0, y: 4.0 }
+    }), false);
 }
 
 #[test]
 fn test_punkt_strecke() {
-    let points = &[
-        (1.0, 1.0, 3.0, 3.0), 
-        (2.0, 2.0, 2.0, 2.0)];
-
-    assert_eq!(calculate_intersections(points), 1);
+    assert_eq!(LineSegment {
+        start: Point { x: 1.0, y: 1.0 },
+        end: Point { x: 3.0, y: 3.0 }
+    }.intersection(&LineSegment {
+        start: Point { x: 2.0, y: 2.0 },
+        end: Point { x: 2.0, y: 2.0 }
+    }), true);
 }
 
 #[test]
 fn test_punkt_in_punkt() {
-    let points = &[
-        (1.0, 1.0, 1.0, 1.0), 
-        (1.0, 1.0, 1.0, 1.0)];
-
-    assert_eq!(calculate_intersections(points), 1);
+    assert_eq!(LineSegment {
+        start: Point { x: 1.0, y: 1.0 },
+        end: Point { x: 1.0, y: 1.0 }
+    }.intersection(&LineSegment {
+        start: Point { x: 1.0, y: 1.0 },
+        end: Point { x: 1.0, y: 1.0 }
+    }), true);
 }
 
-#[test]
-fn test_1000_file() {
-    let file_path = "strecken/s_1000_1.dat";
-    let (points, _) = extract_points(file_path);
-    assert_eq!(calculate_intersections(&points), 11);
-}
 }
