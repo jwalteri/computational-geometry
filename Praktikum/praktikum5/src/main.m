@@ -1,21 +1,28 @@
 %% Computational Geometry - Praktikum 5
 % Johannes Walter, Luca Biege
 % MATLAB Version R2024a
-% Date: 11.06.2024
-%
-%
-% Code bis jetzt nur anhand Aufgabenstellung copy pasta aus ChatGPT !!!
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% 11.06.2024: Datenstrukturen angelegt, Rahmenprogramm geschrieben
+% 25.06.2024: linprog gefixt, Hinweis: MatLab minimiert bei linear
+% Programming die Funktion f., plot erstellt
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 %% Einlesen Polygon-Dateien
 
-polygonFile = fopen('../polygons/polygon.txt', 'r');
-polygon = fscanf(polygonFile, '%f %f', [2 Inf])';
-fclose(polygonFile);
+realpolygonFile = fopen('../polygons/polygon.txt', 'r');
+realpolygon = fscanf(realpolygonFile, '%f %f', [2 Inf])';
+fclose(realpolygonFile);
 
 testpolygonFile = fopen('../polygons/testpolygon.txt', 'r');
 testpolygon = fscanf(testpolygonFile, '%f %f', [2 Inf])';
 fclose(testpolygonFile);
 
+% CHOOSE POLYGON:
+polygon = realpolygon;
+%polygon = testpolygon;
+
+% debug
+debug = true;
 %% Definition Variablen, Errorhandling
 % Kreismittelpunkt: (x_m, y_m)
 % Radius: r -> Ziel: Maximieren!
@@ -32,14 +39,24 @@ if ~is_convex(polygon)
 end
 
 % Anzahl der Eckpunkte des Polygons
-%n = size(polygon, 1);
-n = size(testpolygon, 1);
+n = size(polygon, 1);
 
 % Aufstellen der linearen Ungleichungen
 A = zeros(n, 3);
 b = zeros(n, 1);
 
 %% Kante zwischen Punkt i und i+1 (letzte Kante schließt zum ersten Punkt)
+
+% debug:
+if debug
+    normals = zeros(n, 2);
+    midpoints = zeros(n, 2);
+    directions = zeros(n, 2);
+    centroids = zeros(n, 2);
+end
+
+centroid = mean(polygon); % Schwerpunkt des Polygons
+
 for i = 1:n
     if i < n
         x1 = polygon(i, 1);
@@ -56,31 +73,82 @@ for i = 1:n
     % normierter Normalenvektor der Kante
     normal = [y2 - y1, -(x2 - x1)];
     normal = normal / norm(normal);
-    
+
+    % Überprüfen, ob der Normalenvektor nach Außen zeigt, sonst umdrehen
+    midpoint = [(x1 + x2)/2, (y1 + y2)/2];
+    direction = midpoint - centroid; % Richtung vom Schwerpunkt zum Mittelpunkt der Seite
+    if dot(normal, direction) < 0
+        normal = -normal; % Normalenvektor umdrehen, wenn er nach innen zeigt
+    elseif debug
+        fprintf("Skalar: %f, Midp: %f, %f   Dir: %f, %f\n", dot(normal, direction), midpoint(1), midpoint(2), direction(1), direction(2));
+    end
+
+    % debug:
+    if debug
+        midpoints(i, :) = midpoint;
+        directions(i, :) = direction;
+        normals(i, :) = normal;
+        centroids(i, :) = centroid;
+    end
+
     % Ungleichung für die Seite
-    A(i, :) = [normal, -1]; % normal * [x_m, y_m] - r >= 0
+    A(i, :) = [normal, 1]; % normal * [x_m, y_m] - r >= 0
     b(i) = normal * [(x1 + x2)/2; (y1 + y2)/2];
 end
 
-% Zielfunktion: maximiere r
+% debug:
+if debug
+    figure;
+    hold on;
+    quiver(midpoints(:, 1), midpoints(:, 2), normals(:, 1), normals(:, 2), 0.5, 'r');
+    quiver(centroids(:, 1), centroids(:, 2), directions(:, 1), directions(:, 2), 0.5, 'g');
+    plot(centroid(1), centroid(2), 'k.', 'MarkerSize', 10); % Mittelpunkt zeichnen
+    hold off;
+    title("debug: normals")
+end
+
+% Zielfunktion: maximiere r (also: -(minimiere r))
 f = [0, 0, -1];
 
 % Lineares Programm lösen
-options = optimoptions('linprog', 'Display', 'off');
-[x, fval, exitflag] = linprog(f, [], [], A, b, [], [], options);
+options = optimoptions('linprog', 'Display', 'off'); % Zwischenlösungen ausblenden
+[x, fval, exitflag, output] = linprog(f, A, b, [], [], zeros(size(f)), [], options);
 
 % Ergebnisse
 if exitflag == 1
     x_m = x(1);
     y_m = x(2);
-    r = -fval;
+    r = abs(fval);
     fprintf('Kreismittelpunkt: (%.2f, %.2f)\n', x_m, y_m);
     fprintf('Radius: %.2f\n', r);
+    draw_poly_and_circle(polygon, x_m, y_m, r)
 else
-    fprintf('Das Problem konnte nicht gelöst werden.\n');
+    fprintf('Das Problem konnte nicht gelöst werden: exitflag = %d\n', exitflag);
+    figure;
+    hold on;
+    draw_poly(polygon)
+    hold off;
+    
 end
 
 %% Zeichnen
+function draw_poly(poly)
+    fill(poly(:,1), poly(:,2), [0.9290 0.6940 0.1250]); % Polygon zeichnen
+    axis equal;
+    title('konvexes Polygon');
+end
+
+function draw_poly_and_circle(poly, x_m, y_m, r)
+    figure;
+    hold on;
+
+    draw_poly(poly)
+    viscircles([x_m, y_m], r, 'EdgeColor', [0 0.4470 0.7410]); % Kreis zeichnen
+    plot(x_m, y_m, 'k.', 'MarkerSize', 10); % Mittelpunkt zeichnen
+
+    hold off;    
+    title('Größter einbeschreibbarer Kreis im konvexen Polygon');
+end
 
 %% Funktion für Test auf Konvexität
 function convex = is_convex(polygon)
