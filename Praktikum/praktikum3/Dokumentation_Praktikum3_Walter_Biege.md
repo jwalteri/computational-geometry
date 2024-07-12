@@ -5,19 +5,16 @@ Implementieren Sie unter Zuhilfenahme der Funktionalität aus Aufgabe 1 zur Bere
 
 ## Implementierung
 - Programmiersprache: Rust (rustc 1.73.0 (cc66ad468 2023-10-03))
-- Programmstart
-  - Ordner: praktikum3
-  - Befehl: cargo run --release
 
 ## Design
 
-### Datenstrukturen
+## Datenstrukturen
 BTreeSet ist eine geordnete Struktur, welches effiziente Einfügen, Löschen und Suchen mit O(log n) bietet. Duplikate werden ausgeschlossen.
 
 - SweepLine: BTreeSet<SortableLine>
 - Events: BTreeSet<Event>
 
-### Sortierung
+## Sortierung
 Folgende Traits müssen für ein struct implementiert werden:
 - Sortierung und Vergleichbarkeit von Elementen
   - Eq
@@ -32,11 +29,13 @@ Folgende Traits müssen für ein struct implementiert werden:
   - Ord
   - cmp
 
-Die SweepLine umfasst Elemente vom Typ 'SortableLine'. Diese enthält das Attribut 'index', welches zum Sortieren verwendet wird. 
-
+Die SweepLine umfasst Elemente vom Typ 'SortableLine'. Diese enthält das Attribut 'index', welches zum Sortieren verwendet wird. <br>
 Events verwaltet die Events, welche nach Eventpunkt sortiert werden.
 
-### Algorithmus (Pseudo Code)s
+<div style="page-break-after: always;"></div>
+
+## Algorithmus (Pseudo Code)
+
 1. Übersetze alle Segmente in Start- und Endevents
 2. current_event = Nächstes Event
 3. Update alle Elemente in der Sweepline, sodass der Index auf das Ergebnis der y-Funktion des Segments beim Eventpunkt (x) gesetzt wird
@@ -58,6 +57,7 @@ Events verwaltet die Events, welche nach Eventpunkt sortiert werden.
          4. above = Nachbar vom higher Element in der SweepLine
       2. Schnitt lower X below? Ja -> Neues IntersectionEvent in Events einfügen
       3. Schnitt higher X above? Ja -> Neues IntersectionEvent in Events einfügen
+
 
 Anmerkungen:
 - Die Sortierung der SweepLine abhängig vom Startpunkt der Segmente zu machen, hat sich als problematisch herausgestellt. Die Startpunkte (X/Y) würden immer abhängig vom Eventpunkt neugesetzt werden. Ein direkter Vergleich ergab, dass die Koordianten, die Reihenfolge und Schnittpunkte andere sind, als durch die Verwendung eines dedizierten Index-Attributs. Eine Neuimplementierung mit Index lieferte bessere Ergebnisse und wurde in die finale Version eingefügt.
@@ -94,13 +94,28 @@ Alle Testfiles außer s_1000_10.dat enthalten Daten, welche nicht den Voraussetz
 | jw_100000_10.dat  | 100.000             | 69                 | 24.96 s     | 153.13 ms
 
 ## Visualisierung
-Es wurde eine einfache Visualisierung mit Python entwickelt. Zur Veranschaulichung sind hier alle Testfiles geplottet.
+Es wurde eine einfache Visualisierung mit Python entwickelt. Zur Veranschaulichung sind hier alle Testfiles geplottet:
+
+<div style="page-break-after: always;"></div>
 
 ### s_1000_10.dat
-![s_1000_10.dat](s_1000_10.png "s_1000_10.dat")
+<p align="center">
+   <img src="./s_1000_10.png" width="600">
+</p>
+
 ### jw_1000_10.dat
-![jw_1000_10.dat](jw_1000_10.png "jw_1000_10.dat")
+<p align="center">
+   <img src="./jw_1000_10.png" width="600">
+</p>
+
+<div style="page-break-after: always;"></div>
+
 ### jw_10000_10.dat
-![jw_10000_10.dat](jw_10000_10.png "jw_10000_10.dat")
+<p align="center">
+   <img src="./jw_10000_10.png" width="600">
+</p>
+
 ### jw_10000_10.dat
-![jw_10000_10.dat](jw_100000_10.png "jw_100000_10.dat")
+<p align="center">
+   <img src="./jw_100000_10.png" width="600">
+</p>

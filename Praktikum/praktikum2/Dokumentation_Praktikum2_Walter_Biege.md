@@ -1,7 +1,7 @@
 # Praktikum 2
 
 ## Aufgabenstellung
-Lesen Sie die SVG-Datei 'DeutschlandMitStaedten.svg' und ermitteln Sie die Flächen der einzelnen Bundesländer (bezüglich der in der Datei verwendeten Skala). Am Ende der Datei befinden sich Koordinaten von Städten, Versuchen Sie herauszufinden (bzw. lassen Sie das Ihren Rechner machen ;-), in welchem Bundesland diese jeweils liegen.
+Lesen Sie die SVG-Datei 'DeutschlandMitStaedten.svg' und ermitteln Sie die Flächen der einzelnen Bundesländer (bezüglich der in der Datei verwendeten Skala). Am Ende der Datei befinden sich Koordinaten von Städten, Versuchen Sie herauszufinden (bzw. lassen Sie das Ihren Rechner machen), in welchem Bundesland diese jeweils liegen.
 
 ## Einlesen der Daten
 Die Bundesländer liegen als Path in einer SVG-File vor. Ein Path besteht aus mehreren absoluten und relativen Punktangaben, welche mit 'M', 'l', 'z' und 'H'. Um den Aufwand, die Daten aus der SVG-File auszulesen, zu veringern, wurde der Inhalt jedes Paths pro Bundesland in eine eigene File geladen (siehe Ordner 'states'). Durch den Wegfall der komplexen XML-Struktur wird die Interpretation der Daten sehr einfach, da nur noch der führende Character beachtet werden muss. Alle Punktabgaben wurden zu absoluten Punkten umgerechnet. Einige Bundesländer besitzen 'Inseln', Bereiche außerhalb der Hauptfläche, und 'Löcher', Bereiche in der Hauptfläche, welche nicht zum Bundesland gehören.
@@ -14,14 +14,16 @@ Die erste Aufgabe hat das Ziel, die Fläche eines jeden Bundeslandes zu berechne
 Zur Berechnung der Fläche eines Polygons wird der ([Shoelace-Algorithmus](https://www.101computing.net/the-shoelace-algorithm/)) verwendet. 
 
 ## Test auf Besitz einer Stadt
-Die zweite Aufgabe umfasst eine Liste von 16 deutschen Städten und die Frage, welche Stadt (Punkt) in welchem Bundesland (Polygon) liegt. Dabei ist wieder zu beachten, dass Bundesländer Löcher besitzen. Dadurch kann es vorkommen, dass eine Stadt in mehreren Bundesländern liegt: Berlin liegt im Polygon Brandenburg und im Polygon Berlin. Achtung: Berlin ist ein Loch von Brandenburg. Umgesetzt kann das u.a. mit [Ray-Casting](http://www.philliplemons.com/posts/ray-casting-algorithm).s
+Die zweite Aufgabe umfasst eine Liste von 16 deutschen Städten und die Frage, welche Stadt (Punkt) in welchem Bundesland (Polygon) liegt. Dabei ist wieder zu beachten, dass Bundesländer Löcher besitzen. Dadurch kann es vorkommen, dass eine Stadt in mehreren Bundesländern liegt: Berlin liegt im Polygon Brandenburg und im Polygon Berlin. Achtung: Berlin ist ein Loch von Brandenburg. Umgesetzt kann das u.a. mit [Ray-Castings](http://www.philliplemons.com/posts/ray-casting-algorithm).
 
 
 ## Implementierung
 - Programmiersprache: Rust (rustc 1.73.0 (cc66ad468 2023-10-03))
 - Die SVG wurde eingelesen und in einzelne Files pro State aufgeteilt
-- 
-### main() - Pseudo Code
+
+<div style="page-break-after: always;"></div>
+
+## main() - Pseudo Code
 1. states = Liest die einzelnen Files ein
 2. Für jeden state
    1. state_points = relative_file_to_absolute_vector
@@ -40,7 +42,7 @@ Die zweite Aufgabe umfasst eine Liste von 16 deutschen Städten und die Frage, w
    2. area -= nächsterPunkt.x * aktuellerPunkt.y
 2. absoluter Betrag der area / 2
 
-### point_inside_polygon - Pseudo Code
+### point_inside_polygon() - Pseudo Code
 1. Für alle Punkte des Polygons
    1. aktuellerPunkt
    2. punktVorAktuellemPunkt (n-1)
@@ -50,6 +52,7 @@ Die zweite Aufgabe umfasst eine Liste von 16 deutschen Städten und die Frage, w
    6. aktuellerPunkt = punktVorAktuellemPunkt
 2. Nach allen Punkten: return inside
 
+<div style="page-break-after: always;"></div>
 
 ## Ergebnisse
 
@@ -98,7 +101,7 @@ Die zweite Aufgabe umfasst eine Liste von 16 deutschen Städten und die Frage, w
 ### Vergleich Berechnung - Statista
 Quelle für Größe der Bundesländer laut Statista: [ Fläche der deutschen Bundesländer zum 31. Dezember 2022 ](https://de.statista.com/statistik/daten/studie/154868/umfrage/flaeche-der-deutschen-bundeslaender/)    
 
-| Bundesland                | Fläche (alte) | Fläche (neue) | Verhältnis |
+| Bundesland                | Fläche (berechnet) | Fläche (Statista) | Verhältnis |
 |---------------------------|---------------|---------------|------------|
 | Baden-Württemberg         | 30522,156     | 35748         | 0,85       |
 | Bayern                    | 60026,28      | 70542         | 0,85       |
@@ -116,8 +119,8 @@ Quelle für Größe der Bundesländer laut Statista: [ Fläche der deutschen Bun
 | Sachsen-Anhalt            | 17450,543     | 20467         | 0,77       |
 | Schleswig-Holstein        | 13456,4375    | 15804         | 0,85       |
 | Thueringen                | 13724,586     | 16202         | 0,85       |
-p
-Bei der Betrachtung der Tabelle fällt auf, dass fast überall ein Verhältnis von ~0,85 auftritt. Dadurch kann behauptet werden, dass die Messungen als korrekt angenommen werden können, wenn das Verhältnis übereinstimmt. Jedoch gibt es ein paar Ausreißer: Bremen, Sachsen und Sachsen-Anhalt
+
+Bei der Betrachtung der Tabelle fällt auf, dass fast überall ein Verhältnis von ca. 0,85 auftritt (bzw. ein Fehler von ca. 15%). Dadurch kann behauptet werden, dass die Messungen als korrekt angenommen werden können, wenn das Verhältnis übereinstimmt. Jedoch gibt es ein paar Ausreißer: Bremen, Sachsen und Sachsen-Anhalt
 
 Relativer Fehler:
 - Sachsen-Anhalt : 9,41 %

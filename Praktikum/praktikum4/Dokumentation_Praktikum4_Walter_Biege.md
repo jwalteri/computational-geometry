@@ -54,7 +54,10 @@ In der Spalte Befehl ist auch die Anzahl der Eingabepunkte zu finden.
 
 ### Zufällige Punkte in einem Würfel
 
-Code: rbox \$num_points D$dimension | qconvex TO $filename
+Code: 
+```
+rbox \$num_points D$dimension | qconvex TO $filename
+```
 
 | Befehl | Processed points | Hyperplanes | Distance Tests | CPU Seconds |
 |--------|--------|-------------|----------------|-------------|
@@ -91,14 +94,21 @@ Code: rbox \$num_points D$dimension | qconvex TO $filename
 | rbox 100 D8 I qconvex TO data/8_D_100.txt | 97 | 217728 | 289174 | 0.29 |
 |  |  |  |  |  |
 
+<p align="center">
+   <img src="./graphs/cubic-pcs.png" width="600">
+</p>
+<p align="center">
+   <img src="./graphs/cubic-pdt.png" width="600">
+</p>
 
-![cubic-pcs.png](graphs/cubic-pcs.png)
-![cubic-pdt.png](graphs/cubic-pdt.png)
-
+<div style="page-break-after: always;"></div>
 
 ### Zufällige Punkte in einer regulären 3-D-Spirale
 
-Code: rbox l $num_points | qconvex TO $filename
+Code: 
+```
+rbox l $num_points | qconvex TO $filename
+```
 
 | Befehl | Processed points | Hyperplanes | Distance Tests | CPU Seconds |
 |--------|--------|-------------|----------------|-------------|
@@ -108,14 +118,21 @@ Code: rbox l $num_points | qconvex TO $filename
 | rbox l 100000 I qconvex TO spiral/spiral_100000.txt | 100000 | 399957 | 2715508 | 0.165 |
 |  |  |  |  |  |
 
+<p align="center">
+   <img src="./graphs/spiral-pcs.png" width="600">
+</p>
+<p align="center">
+   <img src="./graphs/spiral-pdt.png" width="600">
+</p>
 
-![spiral-pcs.png](graphs/spiral-pcs.png)
-![spiral-pdt.png](graphs/spiral-pdt.png)
-
+<div style="page-break-after: always;"></div>
 
 ### Zufällige Punkte in einem regulären Polygon
 
-Code: rbox $num_points r D$dimension | qconvex TO $filename
+Code:
+```
+rbox $num_points r D$dimension | qconvex TO $filename
+```
 
 | Befehl | Processed points | Hyperplanes | Distance Tests | CPU Seconds |
 |--------|--------|-------------|----------------|-------------|
@@ -125,14 +142,21 @@ Code: rbox $num_points r D$dimension | qconvex TO $filename
 | rbox 100000 r D2 I qconvex TO polygon/polygon_100000.txt | 100000 | 199998 | 2354356 | 0.108 |
 | rbox 1000000 r D2 I qconvex TO polygon/polygon_1000000.txt | 1000000 | 1999998 | 28423413 | 1.125 |
 
+<p align="center">
+   <img src="./graphs/polygon-pcs.png" width="600">
+</p>
+<p align="center">
+   <img src="./graphs/polygon-pdt.png" width="600">
+</p>
 
-![polygon-pcs.png](graphs/polygon-pcs.png)
-![polygon-pdt.png](graphs/polygon-pdt.png)
-
+<div style="page-break-after: always;"></div>
 
 ### Zufällige Punkte in einer 2-D-Sphäre
 
-Code: rbox $num_points s 2D | qconvex TO $filename
+Code:
+```
+rbox $num_points s 2D | qconvex TO $filename
+```
 
 | Befehl | Processed points | Hyperplanes | Distance Tests | CPU Seconds |
 |--------|--------|-------------|----------------|-------------|
@@ -142,9 +166,12 @@ Code: rbox $num_points s 2D | qconvex TO $filename
 | rbox 100000 s D2 I qconvex TO cospherical/cospherical_100000.txt | 99997 | 199992 | 2395081 | 0.168 |
 | rbox 1000000 s D2 I qconvex TO cospherical/cospherical_1000000.txt | 998691 | 1997376 | 28929364 | 2.929 |
 
-
-![cospherical-pcs.png](graphs/cospherical-pcs.png)
-![cospherical-pdt.png](graphs/cospherical-pdt.png)
+<p align="center">
+   <img src="./graphs/cospherical-pcs.png" width="600">
+</p>
+<p align="center">
+   <img src="./graphs/cospherical-pdt.png" width="600">
+</p>
 
 ## Schlussfolgerung
 In allen Graphen ist ein linearer Anstieg der Distance Tests und der CPU-Zeit bei zunehmender Anzahl an Punkten zu erkennen.

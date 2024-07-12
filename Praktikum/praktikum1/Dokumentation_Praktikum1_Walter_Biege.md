@@ -30,7 +30,9 @@ Inputdaten einlesen, umwandeln und auf Schnittpunkte testen.
          3. Sonst false
    4. Alle Tests bestanden? Ja -> true
 
-### Test auf Korrektheit
+<div style="page-break-after: always;"></div>
+
+## Test auf Korrektheit
 
 ### Geo
 Wir nutzen die im Praktikum angesprochene Bibliothek "geo".
