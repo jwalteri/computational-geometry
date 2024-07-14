@@ -101,7 +101,7 @@ Die zweite Aufgabe umfasst eine Liste von 16 deutschen Städten und die Frage, w
 ### Vergleich Berechnung - Statista
 Quelle für Größe der Bundesländer laut Statista: [ Fläche der deutschen Bundesländer zum 31. Dezember 2022 ](https://de.statista.com/statistik/daten/studie/154868/umfrage/flaeche-der-deutschen-bundeslaender/)    
 
-| Bundesland                | Fläche (berechnet) | Fläche (Statista) | Verhältnis |
+| Bundesland                | Fläche (berechnet) | Fläche (Statista) | Verhältnis (berechnet/Statista) |
 |---------------------------|---------------|---------------|------------|
 | Baden-Württemberg         | 30522,156     | 35748         | 0,85       |
 | Bayern                    | 60026,28      | 70542         | 0,85       |
@@ -115,14 +115,16 @@ Quelle für Größe der Bundesländer laut Statista: [ Fläche der deutschen Bun
 | Nordrhein-Westfalen       | 28966,52      | 34113         | 0,85       |
 | Rheinland-Pfalz           | 16913,566     | 19858         | 0,85       |
 | Saarland                  | 2179,7573     | 2572          | 0,85       |
-| Sachsen                   | 15667,891     | 18450         | 0,95       |
-| Sachsen-Anhalt            | 17450,543     | 20467         | 0,77       |
+| Sachsen                   | 15667,891     | 18450         | 0,85       |
+| Sachsen-Anhalt            | 17450,543     | 20467         | 0,85       |
 | Schleswig-Holstein        | 13456,4375    | 15804         | 0,85       |
 | Thueringen                | 13724,586     | 16202         | 0,85       |
 
-Bei der Betrachtung der Tabelle fällt auf, dass fast überall ein Verhältnis von ca. 0,85 auftritt (bzw. ein Fehler von ca. 15%). Dadurch kann behauptet werden, dass die Messungen als korrekt angenommen werden können, wenn das Verhältnis übereinstimmt. Jedoch gibt es ein paar Ausreißer: Bremen, Sachsen und Sachsen-Anhalt
+Bei der Betrachtung der Tabelle fällt auf, dass fast überall ein Verhältnis von ca. 0,85 auftritt. Wir nehmen an, dass ein Verhältnis von 0,85 für eine korrekt berechnete Fläche steht. Dadurch kann behauptet werden, dass die Messungen als korrekt angenommen werden können, wenn das Verhältnis übereinstimmt. Jedoch gibt es ein paar Ausreißer:
 
-Relativer Fehler:
-- Sachsen-Anhalt : 9,41 %
-- Sachsen: 11,76 %
-- Bremen: 4,71 %
+Relativer Fehler nach Annahme, dass Verhältnis von 0,85 korrekt ist:
+Formel: (berechnet - statista)/statista
+
+- Mecklenburg-Vorpommern : 0,156  
+- Hamburg: 0,161
+- Bremen: 0,188
